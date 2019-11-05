@@ -15,12 +15,9 @@ preferences = preferences.Preferences(
     preferences.FileStorage(home.joinpath('.iterm-notify-temp.json'))
 )
 
-preferences.load()
-
 
 def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.Callable[[dict], None],
                      defaults: dict) -> handlers.Dispatcher:
-
     success_template = Notification(
         title="#win (in {duration:d}s)",
         message="{command_line}"
@@ -71,13 +68,11 @@ def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.C
 async def main(connection):
     app = await iterm2.async_get_app(connection)
 
-    existing_sessions = list_current_session_ids(app)
-    preferences.prune(existing_sessions)
-
     async def monitor(session_id):
-        """Wait for commands to start or stop in this session.
+        preferences.load()
 
-        Start and cancel tasks to wait for long-running tasks."""
+        existing_sessions = list_current_session_ids(app)
+        preferences.prune(existing_sessions)
 
         session = app.get_session_by_id(session_id)
 
