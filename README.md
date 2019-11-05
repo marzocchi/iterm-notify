@@ -24,7 +24,7 @@ Support for other shells
 ---
 
 Currently, only Zsh if fully supported out of the box, but iterm-notify _should_ work in Bash, and possibly more shells,
-as long as, after sourcing `init.sh`, two aptly-named shell functions are set to execute before and after every command,
+as long as after sourcing `init.sh` two aptly-named shell functions are set to execute before and after every command,
 with something equivalent to Zsh's precmd/preexec hooks:
 
 - `iterm-notify-before-command COMMAND_LINE` must be called before executing every command, passing whatever the user
