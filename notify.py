@@ -59,7 +59,7 @@ def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.C
     dsp.register_handler("before-command", command_complete.before_handler)
     dsp.register_handler("after-command", command_complete.after_handler)
 
-    dsp.register_handler("set-timeout", config.set_timeout_handler)
+    dsp.register_handler("set-command-complete-timeout", config.set_timeout_handler)
     dsp.register_handler("set-success-title", config.set_success_title_handler)
     dsp.register_handler("set-failure-title", config.set_failure_title_handler)
     dsp.register_handler("set-success-icon", config.set_success_icon_handler)
