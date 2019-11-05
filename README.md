@@ -1,4 +1,4 @@
-iTerm-notify
+iTerm-notify [![Build Status](https://travis-ci.org/marzocchi/iterm-notify.svg?branch=master)](https://travis-ci.org/marzocchi/iterm-notify)
 ---
 
 Desktop notifications for local and remote long-running commands in iTerm2 and Zsh.
