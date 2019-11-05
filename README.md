@@ -40,6 +40,8 @@ right **after** sourcing `init.sh`.
         
         iterm-notify-set-config failure-icon "/path/to/error-icon.png"
         iterm-notify-set-config success-icon "/path/to/success-icon.png"
+        
+    Try [this][dogefy.sh]. Wow.
     
 - Set a different timeout for notifications:
 
@@ -48,3 +50,4 @@ right **after** sourcing `init.sh`.
 
 [explain-id]: https://www.iterm2.com/python-api/customcontrol.html
 [terminal-notifier]: https://github.com/julienXX/terminal-notifier
+[dogefy.sh]: https://gist.github.com/marzocchi/1bf65095962494a0ff17c417d6b1bb4b
