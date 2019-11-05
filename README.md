@@ -13,11 +13,24 @@ Requirements
 Install
 ---
 1. Clone this repository
-1. Create your "identity" by entering a random string as the first line in `$HOME/.iterm-notify-identity`
-    - The identity is a security feature of [iTerm2's Custom Control Sequences][explain-id] support, so don't be too lazy
+1. Create your "identity file" by entering a random string as the first line in `$HOME/.iterm-notify-identity`
+    - The _identity_ is a **security feature** of [iTerm2's Custom Control Sequences][explain-id] support, so don't be too lazy
 1. Symlink `notify.py` to `~/Library/ApplicationSupport/iTerm2/Scripts/AutoLaunch/notify.py`
 1. Source `init.sh` in your `.zshrc`
 1. Start `notify.py` from iTerm2's Scripts menu (Scripts > AutoLaunch > notify.py)
+1. Copy the identity file and `.init.sh` on any other machine you want to receive notifications from.
+
+Support for other shells
+---
+
+Currently, only Zsh if fully supported out of the box, but iterm-notify _should_ work in Bash, and possibly more shells,
+as long as, after sourcing `init.sh`, two aptly-named shell functions are set to execute before and after every command,
+with something equivalent to Zsh's precmd/preexec hooks:
+
+- `iterm-notify-before-command COMMAND_LINE` must be called before executing every command, passing whatever the user
+   typed on the prompt as the first argument 
+- `iterm-notify-after-command EXIT_CODE` must be called after the command finished, passing it the exit code as the
+   first argument
 
 Configuration
 ---
