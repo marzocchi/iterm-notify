@@ -72,7 +72,7 @@ class NotifyCommandComplete(object):
         self._cmd: typing.Union[Command, None] = None
 
     def before_handler(self, args: list):
-        command_line = " ".join(args)
+        command_line = ",".join(args)
 
         if self._cmd is not None:
             raise RuntimeError("before_handler called more than once without calling after_command in between")
