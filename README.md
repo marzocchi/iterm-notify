@@ -24,24 +24,24 @@ Support for other shells
 ---
 
 Currently, only Zsh if fully supported out of the box, but iterm-notify _should_ work in Bash, and possibly more shells,
-as long as after sourcing `init.sh` two aptly-named shell functions are set to execute before and after every command,
+as long as after sourcing `init.sh` two aptly-named subcommands are set to execute before and after every command,
 with something equivalent to Zsh's precmd/preexec hooks:
 
-- `iterm-notify-before-command COMMAND_LINE` must be called before executing every command, passing whatever the user
+- `iterm-notify before-command COMMAND_LINE` must be called before executing every command, passing whatever the user
    typed on the prompt as the first argument 
-- `iterm-notify-after-command EXIT_CODE` must be called after the command finished, passing it the exit code as the
+- `iterm-notify after-command EXIT_CODE` must be called after the command finished, passing it the exit code as the
    first argument
 
 Configuration
 ---
 
-The behavior of iterm-notify can be modified by using `iterm-notify-set-config`, for example by calling it in `.zshrc` 
+The behavior of iterm-notify can be modified by using `iterm-notify config-set`, for example by calling it in `.zshrc` 
 right **after** sourcing `init.sh`.
 
 - Set a custom title for error and success notifications:
 
-        iterm-notify-set-config failure-title "Command failed"
-        iterm-notify-set-config success-title "Command finished successfully!"
+        iterm-notify config-set failure-title "Command failed"
+        iterm-notify config-set success-title "Command finished successfully!"
 
     The value can also be a Python format string using any of these placeholders:
     
@@ -51,14 +51,14 @@ right **after** sourcing `init.sh`.
         
 - Replace the boring default notification icons for failure or success. Use paths to image files or URLs.
         
-        iterm-notify-set-config failure-icon "/path/to/error-icon.png"
-        iterm-notify-set-config success-icon "/path/to/success-icon.png"
+        iterm-notify config-set failure-icon "/path/to/error-icon.png"
+        iterm-notify config-set success-icon "/path/to/success-icon.png"
         
     Try [this][dogefy.sh]. Wow.
     
 - Set a different timeout for notifications:
 
-        iterm-notify-set-config command-complete-timeout 15
+        iterm-notify config-set command-complete-timeout 15
 
 
 [explain-id]: https://www.iterm2.com/python-api/customcontrol.html

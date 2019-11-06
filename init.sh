@@ -1,53 +1,80 @@
-iterm_notify_identity_file="$HOME/.iterm-notify-identity"
+function iterm-notify() {
+  local last_status=$?
+  local printf
 
-if [[ -s "$iterm_notify_identity_file" ]]; then
-  iterm_notify_identity=$(head -n1 "$iterm_notify_identity_file" | sed 's/^\ *//' | sed 's/\ *$//')
-fi
+  _standard-printf() {
+    printf $@
+  }
 
-if [[ -z "$iterm_notify_identity" ]]; then
-  echo "iterm-notify: ${iterm_notify_identity_file} does not exist or is empty" >&2
-fi
+  _tmux-printf() {
+    t=$(_standard-printf $@)
+    printf '\ePtmux;\e%s\e\\' "$t"
+  }
 
-iterm-notify-printf() {
-  if [ -n "$TMUX" ]; then
-    echo iterm-notify-tmux-printf
-  else
-    echo iterm-notify-standard-printf
-  fi
-}
+  _log() {
+    sed 's/^/iterm-notify: /' >&2
+  }
 
-iterm-notify-standard-printf() {
-  printf $@
-}
-
-iterm-notify-tmux-printf() {
-  t=$(iterm-notify-standard-printf $@)
-  printf '\ePtmux;\e%s\e\\' "$t"
-}
-
-iterm-notify-set-config() {
-  k="$1"
-  v="$2"
-
-  if [[ -z "$k" ]]; then
-    echo usage: iterm-notify-set-config NAME VALUE >&2
+  if [[ $# == 0 ]]; then
+    echo usage: iterm-notify "before-command|after-command|config-set" >&2
     return 1
   fi
 
-  $(iterm-notify-printf) "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$v"
-}
+  local cmd="$1"
+  shift
 
-iterm-notify-before-command() {
-  $(iterm-notify-printf) "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "before-command" "$1"
-}
+  if [ -n "$TMUX" ]; then
+    printf=_tmux-printf
+  else
+    printf=_standard-printf
+  fi
 
-iterm-notify-after-command() {
-  local last_status=$?
-  $(iterm-notify-printf) "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$last_status"
+  iterm_notify_identity_file="$HOME/.iterm-notify-identity"
+
+  if [[ -s "$iterm_notify_identity_file" ]]; then
+    iterm_notify_identity=$(head -n1 "$iterm_notify_identity_file" | sed 's/^\ *//' | sed 's/\ *$//')
+  fi
+
+  if [[ -z "$iterm_notify_identity" ]]; then
+    echo "${iterm_notify_identity_file} does not exist or is empty" | _log
+    return 1
+  fi
+
+  case $cmd in
+  before-command)
+    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "before-command" "$1"
+    ;;
+  after-command)
+    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$last_status"
+    ;;
+  config-set)
+    k="$1"
+    v="$2"
+
+    if [[ -z "$k" ]]; then
+      echo usage: iterm-notify config-set NAME VALUE >&2
+      return 1
+    fi
+
+    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$v"
+    ;;
+  *)
+    echo "unknown subcommand ${cmd}" | _log
+    return 1
+  esac
 }
 
 if [[ -n "$ZSH_VERSION" ]]; then
   autoload add-zsh-hook
-  add-zsh-hook preexec iterm-notify-before-command
-  add-zsh-hook precmd iterm-notify-after-command
+
+  _iterm_notify_before_command_hook() {
+    iterm-notify before-command "$1"
+  }
+
+  _iterm_notify_after_command_hook() {
+    iterm-notify after-command "$?"
+  }
+
+  add-zsh-hook preexec _iterm_notify_before_command_hook
+  add-zsh-hook precmd _iterm_notify_after_command_hook
 fi
