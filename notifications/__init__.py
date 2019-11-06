@@ -2,7 +2,7 @@ import typing
 from datetime import timedelta
 
 
-class _Command(typing.Protocol):
+class _Command(typing.Protocol):  # pragma: no cover
     @property
     def command_line(self) -> str:
         pass
@@ -17,10 +17,12 @@ class _Command(typing.Protocol):
 
 
 class Notification(object):
-    def __init__(self, title: str, message: str, icon: typing.Union[str, None] = None):
+    def __init__(self, title: str, message: str, icon: typing.Union[str, None] = None,
+                 sound: typing.Union[str, None] = None):
         self._title = title
         self._message = message
         self._icon = icon
+        self._sound = sound
 
     @property
     def icon(self) -> typing.Union[str, None]:
@@ -29,6 +31,14 @@ class Notification(object):
     @icon.setter
     def icon(self, v: typing.Union[str, None]):
         self._icon = v
+
+    @property
+    def sound(self) -> typing.Union[str, None]:
+        return self._sound
+
+    @sound.setter
+    def sound(self, v: typing.Union[str, None]):
+        self._sound = v
 
     @property
     def message(self) -> str:
@@ -69,8 +79,17 @@ class NotificationFactory(object):
 
         tpl_vars = self._vars(cmd)
 
-        title = template.title.format(**tpl_vars)
-        message = template.message.format(**tpl_vars)
         icon = template.icon
+        sound = template.sound
 
-        return Notification(title=title, message=message, icon=icon)
+        try:
+            title = template.title.format(**tpl_vars)
+        except KeyError:
+            title = template.title
+
+        try:
+            message = template.message.format(**tpl_vars)
+        except KeyError:
+            message = template.message
+
+        return Notification(title=title, message=message, icon=icon, sound=sound)

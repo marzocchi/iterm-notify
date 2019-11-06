@@ -2,13 +2,11 @@ function iterm-notify() {
   local last_status=$?
   local printf
 
-  _standard-printf() {
-    printf $@
-  }
-
   _tmux-printf() {
-    t=$(_standard-printf $@)
-    printf '\ePtmux;\e%s\e\\' "$t"
+    local pattern="$1"
+    shift
+
+    printf "\ePtmux;\e\e${pattern}\e\\" "$@"
   }
 
   _log() {
@@ -24,9 +22,9 @@ function iterm-notify() {
   shift
 
   if [ -n "$TMUX" ]; then
-    printf=_tmux-printf
+    printf="_tmux-printf"
   else
-    printf=_standard-printf
+    printf="printf"
   fi
 
   iterm_notify_identity_file="$HOME/.iterm-notify-identity"
@@ -64,17 +62,19 @@ function iterm-notify() {
   esac
 }
 
+_iterm_notify_before_command_hook() {
+  iterm-notify before-command "$1"
+}
+
+_iterm_notify_after_command_hook() {
+  iterm-notify after-command "$?"
+}
+
 if [[ -n "$ZSH_VERSION" ]]; then
   autoload add-zsh-hook
-
-  _iterm_notify_before_command_hook() {
-    iterm-notify before-command "$1"
-  }
-
-  _iterm_notify_after_command_hook() {
-    iterm-notify after-command "$?"
-  }
-
   add-zsh-hook preexec _iterm_notify_before_command_hook
   add-zsh-hook precmd _iterm_notify_after_command_hook
+elif [[ -n "$BASH_VERSION" ]]; then
+  preexec_functions+=(_iterm_notify_before_command_hook)
+  precmd_functions+=(_iterm_notify_after_command_hook)
 fi

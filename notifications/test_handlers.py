@@ -131,16 +131,29 @@ class MockWithTimeout(object):
         self._timeout = v
 
 
+class NotificationsBackendSelectorMock(object):
+    @property
+    def selected(self) -> str:
+        pass
+
+    @selected.setter
+    def selected(self, v: str):
+        pass
+
+
 class TestConfigHandler(TestCase):
     def setUp(self) -> None:
         super().setUp()
+
+        self.notifications_backend_selector = NotificationsBackendSelectorMock()
 
         self.success_template = Notification(title="", message="")
         self.failure_template = Notification(title="", message="")
         self.timeout = MockWithTimeout()
 
         self.cfg = ConfigHandler(timeout=self.timeout, success_template=self.success_template,
-                                 failure_template=self.failure_template)
+                                 failure_template=self.failure_template,
+                                 notifications_backend_selector=self.notifications_backend_selector)
 
     def test_set_timeout_handler(self):
         self.cfg.set_timeout_handler(['42'])

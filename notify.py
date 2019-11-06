@@ -24,7 +24,8 @@ async def main(connection):
         if not session:
             return
 
-        dsp = build_dispatcher(app, session_id=session_id, defaults=prefs.get(session_id),
+        dsp = build_dispatcher(app, conn=connection, session_id=session_id,
+                               defaults=prefs.get(session_id),
                                on_prefs_change=prefs.handler(session_id))
 
         async with iterm2.CustomControlSequenceMonitor(
@@ -36,13 +37,12 @@ async def main(connection):
             while True:
                 matches = await mon.async_get()
 
-                try:
-                    cmd_name = matches.group(1)
-                    cmd_args = matches.group(2).split(",")
+                cmd_name = matches.group(1)
+                cmd_args = matches.group(2).split(",")
 
+                try:
                     dsp.dispatch(cmd_name, cmd_args)
                 except:
-                    traceback.print_exc()
                     continue
 
     # Create a task running `monitor` for each session, including those created
@@ -62,7 +62,8 @@ def list_current_session_ids(app: iterm2.App):
     return existing_sessions
 
 
-def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.Callable[[dict], None],
+def build_dispatcher(app: iterm2.App, conn: iterm2.Connection, session_id: str,
+                     on_prefs_change: typing.Callable[[dict], None],
                      defaults: dict) -> handlers.Dispatcher:
     success_template = Notification(
         title="#win (in {duration:d}s)",
@@ -85,7 +86,14 @@ def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.C
         timeout=30
     )
 
-    notification_backend = backends.TerminalNotifier(runner=backends.RunCommand())
+    notification_backend = backends.SwitchableNotifier(
+        {
+            'iterm': backends.iTermNotifier(conn),
+            'osascript': backends.OsaScriptNotifier(backends.ExecSubprocess()),
+            'terminal-notifier': backends.TerminalNotifier(backends.ExecSubprocess())
+        },
+        'osascript'
+    )
 
     command_complete = handlers.NotifyCommandComplete(
         notification_strategy=notification_strategy,
@@ -93,9 +101,12 @@ def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.C
         notification_backend=notification_backend
     )
 
-    config = handlers.ConfigHandler(timeout=notification_strategy, success_template=success_template,
-                                    failure_template=failure_template, on_change=on_prefs_change,
-                                    defaults=defaults)
+    config = handlers.ConfigHandler(timeout=notification_strategy,
+                                    defaults=defaults,
+                                    on_change=on_prefs_change,
+                                    success_template=success_template,
+                                    failure_template=failure_template,
+                                    notifications_backend_selector=notification_backend)
 
     dsp = handlers.Dispatcher()
 
@@ -103,10 +114,16 @@ def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.C
     dsp.register_handler("after-command", command_complete.after_handler)
 
     dsp.register_handler("set-command-complete-timeout", config.set_timeout_handler)
+
     dsp.register_handler("set-success-title", config.set_success_title_handler)
-    dsp.register_handler("set-failure-title", config.set_failure_title_handler)
     dsp.register_handler("set-success-icon", config.set_success_icon_handler)
+    dsp.register_handler("set-success-sound", config.set_success_sound_handler)
+
+    dsp.register_handler("set-failure-title", config.set_failure_title_handler)
     dsp.register_handler("set-failure-icon", config.set_failure_icon_handler)
+    dsp.register_handler("set-failure-sound", config.set_failure_sound_handler)
+
+    dsp.register_handler("set-notifications-backend", config.set_notifications_backend_handler)
 
     return dsp
 

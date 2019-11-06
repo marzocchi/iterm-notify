@@ -93,7 +93,7 @@ class NotifyCommandComplete(object):
         self._cmd = None
 
 
-class WithTimeout(typing.Protocol):
+class _WithTimeout(typing.Protocol):
     @property
     def timeout(self) -> int:
         pass
@@ -103,11 +103,23 @@ class WithTimeout(typing.Protocol):
         pass
 
 
+class _NotificationsBackendSelector(typing.Protocol):
+    @property
+    def selected(self) -> str:
+        pass
+
+    @selected.setter
+    def selected(self, v: str):
+        pass
+
+
 class ConfigHandler(object):
-    def __init__(self, timeout: WithTimeout, success_template: Notification, failure_template: Notification,
+    def __init__(self, timeout: _WithTimeout, success_template: Notification, failure_template: Notification,
+                 notifications_backend_selector: _NotificationsBackendSelector,
                  on_change: typing.Union[None, typing.Callable[[dict], None]] = None,
                  defaults: dict = {}):
 
+        self._notifications_backend = notifications_backend_selector
         self._success_template = success_template
         self._failure_template = failure_template
 
@@ -120,26 +132,47 @@ class ConfigHandler(object):
         if 'success-title' in cfg:
             self._success_template.title = cfg['success-title']
 
-        if 'failure-title' in cfg:
-            self._failure_template.title = cfg['failure-title']
-
         if 'success-icon' in cfg:
             self._success_template.icon = cfg['success-icon']
+
+        if 'success-sound' in cfg:
+            self._success_template.sound = cfg['success-sound']
+
+        if 'failure-title' in cfg:
+            self._failure_template.title = cfg['failure-title']
 
         if 'failure-icon' in cfg:
             self._failure_template.icon = cfg['failure-icon']
 
+        if 'failure-sound' in cfg:
+            self._failure_template.sound = cfg['failure-sound']
+
         if 'command-complete-timeout' in cfg:
             self._timeout.timeout = cfg['command-complete-timeout']
+
+        if 'notifications-backend' in cfg:
+            self._notifications_backend.selected = cfg['notifications-backend']
 
     def _dump(self) -> dict:
         return {
             'command-complete-timeout': self._timeout.timeout,
+
             'success-title': self._success_template.title,
-            'failure-title': self._failure_template.title,
             'success-icon': self._success_template.icon,
+            'success-sound': self._success_template.sound,
+
+            'failure-title': self._failure_template.title,
             'failure-icon': self._failure_template.icon,
+            'failure-sound': self._failure_template.sound,
+
+            'notifications-backend': self._notifications_backend.selected,
         }
+
+    def set_notifications_backend_handler(self, args: list):
+        self._notifications_backend.selected = args[0]
+
+        if self._on_change is not None:
+            self._on_change(self._dump())
 
     def set_success_title_handler(self, args: list):
         self._success_template.title = args[0]
@@ -161,6 +194,18 @@ class ConfigHandler(object):
 
     def set_success_icon_handler(self, args: list):
         self._success_template.icon = args[0] if args[0] != "" else None
+
+        if self._on_change is not None:
+            self._on_change(self._dump())
+
+    def set_success_sound_handler(self, args: list):
+        self._success_template.sound = args[0] if args[0] != "" else None
+
+        if self._on_change is not None:
+            self._on_change(self._dump())
+
+    def set_failure_sound_handler(self, args: list):
+        self._failure_template.sound = args[0] if args[0] != "" else None
 
         if self._on_change is not None:
             self._on_change(self._dump())
