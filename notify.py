@@ -8,12 +8,58 @@ from notifications.identity import load
 from notifications import backends, handlers, strategies, preferences, NotificationFactory, Notification
 
 home = Path.home()
-
 identity = load(home.joinpath('.iterm-notify-identity'))
+prefs = preferences.Preferences(preferences.FileStorage(home.joinpath('.iterm-notify-temp.json')))
 
-preferences = preferences.Preferences(
-    preferences.FileStorage(home.joinpath('.iterm-notify-temp.json'))
-)
+
+async def main(connection):
+    app = await iterm2.async_get_app(connection)
+    refresh_preferences(app, prefs)
+
+    async def monitor(session_id):
+        refresh_preferences(app, prefs)
+
+        session = app.get_session_by_id(session_id)
+
+        if not session:
+            return
+
+        dsp = build_dispatcher(app, session_id=session_id, defaults=prefs.get(session_id),
+                               on_prefs_change=prefs.handler(session_id))
+
+        async with iterm2.CustomControlSequenceMonitor(
+                connection=connection,
+                identity=identity,
+                regex=r'^([^,]+),(.+)$',
+                session_id=session_id
+        ) as mon:
+            while True:
+                matches = await mon.async_get()
+
+                try:
+                    cmd_name = matches.group(1)
+                    cmd_args = matches.group(2).split(",")
+
+                    dsp.dispatch(cmd_name, cmd_args)
+                except:
+                    traceback.print_exc()
+                    continue
+
+    # Create a task running `monitor` for each session, including those created
+    # in the future.
+    await iterm2.EachSessionOnceMonitor.async_foreach_session_create_task(
+        app, monitor)
+
+
+def list_current_session_ids(app: iterm2.App):
+    existing_sessions: list[str] = []
+
+    for window in app.windows:
+        for tab in window.tabs:
+            for session in tab.sessions:
+                existing_sessions.append(session.session_id)
+
+    return existing_sessions
 
 
 def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.Callable[[dict], None],
@@ -65,56 +111,11 @@ def build_dispatcher(app: iterm2.App, session_id: str, on_prefs_change: typing.C
     return dsp
 
 
-async def main(connection):
-    app = await iterm2.async_get_app(connection)
+def refresh_preferences(app: iterm2.App, prefs: preferences.Preferences):
+    prefs.load()
 
-    async def monitor(session_id):
-        preferences.load()
-
-        existing_sessions = list_current_session_ids(app)
-        preferences.prune(existing_sessions)
-
-        session = app.get_session_by_id(session_id)
-
-        if not session:
-            return
-
-        dsp = build_dispatcher(app, session_id=session_id, defaults=preferences.get(session_id),
-                               on_prefs_change=preferences.handler(session_id))
-
-        async with iterm2.CustomControlSequenceMonitor(
-                connection=connection,
-                identity=identity,
-                regex=r'^([^,]+),(.+)$',
-                session_id=session_id
-        ) as mon:
-            while True:
-                matches = await mon.async_get()
-
-                try:
-                    cmd_name = matches.group(1)
-                    cmd_args = matches.group(2).split(",")
-
-                    dsp.dispatch(cmd_name, cmd_args)
-                except:
-                    traceback.print_exc()
-                    continue
-
-    # Create a task running `monitor` for each session, including those created
-    # in the future.
-    await iterm2.EachSessionOnceMonitor.async_foreach_session_create_task(
-        app, monitor)
-
-
-def list_current_session_ids(app: iterm2.App):
-    existing_sessions: list[str] = []
-
-    for window in app.windows:
-        for tab in window.tabs:
-            for session in tab.sessions:
-                existing_sessions.append(session.session_id)
-
-    return existing_sessions
+    existing_sessions = list_current_session_ids(app)
+    prefs.prune(existing_sessions)
 
 
 # This instructs the script to run the "main" coroutine and to keep running
