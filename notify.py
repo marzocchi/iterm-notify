@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.8
 
 import iterm2
-import traceback
 import typing
+from base64 import b64decode
 from pathlib import Path
 from notifications.identity import load
 from notifications import backends, handlers, strategies, preferences, NotificationFactory, Notification
@@ -39,6 +39,8 @@ async def main(connection):
 
                 cmd_name = matches.group(1)
                 cmd_args = matches.group(2).split(",")
+
+                cmd_args = list(map(lambda s: b64decode(s).decode('utf-8'), cmd_args))
 
                 try:
                     dsp.dispatch(cmd_name, cmd_args)
