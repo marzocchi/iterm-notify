@@ -1,6 +1,6 @@
 function iterm-notify() {
   local last_status=$?
-  local printf
+  local printf cmd
 
   _tmux-printf() {
     local pattern="$1"
@@ -18,7 +18,7 @@ function iterm-notify() {
     return 1
   fi
 
-  local cmd="$1"
+  cmd="$1"
   shift
 
   if [ -n "$TMUX" ]; then
@@ -46,20 +46,36 @@ function iterm-notify() {
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$last_status"
     ;;
   config-set)
-    local k="$1"
-    local v="$2"
+    local k v
 
-    if [[ -z "$k" ]]; then
+    if [[ $# -lt 2 ]]; then
+
+      if [[ "$1" == "-" ]]; then
+        if [[ -t 0 ]]; then
+          echo "enter one parameter, value pair on each line; hit CTRL-D when done..." >&2
+        fi
+        while read -r k v; do
+          iterm-notify config-set "$k" "$v"
+        done
+
+        return 0
+      fi
+
       echo usage: iterm-notify config-set NAME VALUE >&2
+      echo usage: echo NAME VALUE \| iterm-notify config-set - >&2
       return 1
     fi
+
+    k="$1"
+    v="$2"
 
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$v"
     ;;
   send)
-    local message="$(cat | head -n1)"
-    local type="$1"
-    local title="$2"
+    local type message title
+    message="$(cat | head -n1)"
+    type="$1"
+    title="$2"
 
     $printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" "$type" "$message" "$title"
     ;;

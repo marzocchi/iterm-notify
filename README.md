@@ -3,13 +3,16 @@ iTerm-notify [![Build Status](https://travis-ci.org/marzocchi/iterm-notify.svg?b
 
 Desktop notifications for local and remote long-running commands in iTerm2 and Zsh or Bash.
 
+Usage
+--- 
+
 Requirements
 ---
 - iTerm2 with the Python API enabled with version > 3.8 of the Python Runtime (at the time of writing, this is only
   available with the beta)
-- Zsh, or Bash (with [bash-preexec][bash-preexec], bundled with iTerm2's shell integration)
+- Zsh or Bash (with [bash-preexec][bash-preexec])
 
-Install
+Installation
 ---
 1. Clone this repository
 1. Create your "identity file" by entering a random string as the first line in `$HOME/.iterm-notify-identity`
@@ -18,17 +21,16 @@ Install
 1. Source `init.sh` in your shell initialization file
 1. Start `notify.py` from iTerm2's Scripts menu (Scripts > AutoLaunch > notify.py)
 1. Copy the identity file and `init.sh` (and source it!) on any other machine you want to receive notifications from.
+1. For Bash: [bash-preexec][bash-preexec] (bundled with iTerm2's shell integration)
 
 Supported shells
 ---
 
-iTerm-notify should work with any shell that provides hooks to invoke functions before a command is executed and after
-it is finished. Zsh provides `preexec`/`precmd` [hooks][zsh-hooks] and is supported out of the box.
- 
-In Bash, [bash-preexec][bash-preexec] (which is bundled with iTerm2's shell integration) is required and must be loaded
-before `init.sh`.
+iTerm-notify works out of the box with Zsh as it provides builtin  `preexec`/`precmd` [hooks][zsh-hooks]. In Bash,
+[bash-preexec][bash-preexec] (which is bundled with iTerm2's shell integration) is required and must be loaded before 
+`init.sh`.
 
-Users of other shells can roll out their own integration:
+Users of other shells can try to make it work by rolling out their own integration:
 
 - `iterm-notify before-command COMMAND_LINE` must be called before executing every command, passing whatever the user
    typed on the prompt as the first argument 
@@ -39,12 +41,18 @@ Users of other shells can roll out their own integration:
 Configuration
 ---
 
-The behavior of iterm-notify can be modified by using `iterm-notify config-set`, for example by calling it in `.zshrc` 
-right **after** sourcing `init.sh`.
+The behavior of `iterm-notify` can be modified by using `iterm-notify config-set`, giving a parameter and its value as
+first and second arguments, or giving `-` as the first and only argument, and parameters and their values one per line
+on STDIN.
+
+To persist your setting just add calls to `iterm-notify config-set` to your shell's initialization file, **after**
+sourcing `init.sh`.
 
 - Set the notification backend:
 
-        iterm-notify config-set notifications-backend terminal-notifier 
+    ```shell script
+    iterm-notify config-set notifications-backend terminal-notifier 
+    ```
     
     Supported backends:
     - `iterm`: notifies using a modal alert using iTerm2's own Alert mechanism; can only display notification
@@ -56,12 +64,16 @@ right **after** sourcing `init.sh`.
          
 - Customize the notifications (check above for what will actually work with your preferred backend):
 
-        iterm-notify config-set success-title "Command finished successfully!"
-        iterm-notify config-set success-icon "/path/to/success-icon.png"
-        iterm-notify config-set success-sound "Glass"
+    ```shell script
+    iterm-notify config-set - <<'FOO'
+        success-title Command finished successfully!
+        success-icon /path/to/success-icon.png
+        success-sound Glass
+    FOO
+    ```
 
     Replace "success" with "failure" for, well, customizing failure notifications. The value for `icon` can also be an
-    URL when using the 'terminal-notifier; backend. Try [this][dogefy.sh]. Wow. The value for `sound` should be a sound
+    URL when using the `terminal-notifier`; backend. Try [this][dogefy.sh]. Wow. The value for `sound` should be a sound
     name, you can find a list in Sound Preferences.
     
     The value for `title` can also be a Python format string using any of these placeholders:
@@ -73,7 +85,9 @@ right **after** sourcing `init.sh`.
     
 - Set a different timeout for notifications:
 
-        iterm-notify config-set command-complete-timeout 15
+    ```shell script
+    iterm-notify config-set command-complete-timeout 15
+    ```
 
 
 [explain-id]: https://www.iterm2.com/python-api/customcontrol.html
