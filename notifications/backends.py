@@ -87,8 +87,6 @@ class TerminalNotifier(object):
             self.terminal_notifier_path,
             '-activate',
             'com.googlecode.iterm2',
-            '-sender',
-            'com.googlecode.iterm2',
             '-title',
             n.title,
             '-message',

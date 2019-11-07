@@ -16,8 +16,6 @@ class MockNotifier(object):
 
 class TestTerminalNotifier(TestCase):
     DEFAULTS = ['/some/path', '-activate',
-                'com.googlecode.iterm2',
-                '-sender',
                 'com.googlecode.iterm2']
 
     def test_notify(self):
