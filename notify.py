@@ -101,6 +101,8 @@ def build_dispatcher(app: iterm2.App, conn: iterm2.Connection, session_id: str,
         notification_backend=notification_backend
     )
 
+    notify = handlers.Notify(notification_backend=notification_backend, notification_factory=notification_factory)
+
     config = handlers.ConfigHandler(timeout=notification_strategy,
                                     defaults=defaults,
                                     on_change=on_prefs_change,
@@ -112,6 +114,7 @@ def build_dispatcher(app: iterm2.App, conn: iterm2.Connection, session_id: str,
 
     dsp.register_handler("before-command", command_complete.before_handler)
     dsp.register_handler("after-command", command_complete.after_handler)
+    dsp.register_handler("notify", notify.notify_handler)
 
     dsp.register_handler("set-command-complete-timeout", config.set_timeout_handler)
 

@@ -70,7 +70,22 @@ class NotificationFactory(object):
             'exit_code': cmd.exit_code
         }
 
-    def create(self, cmd: _Command) -> Notification:
+    def create(self, code: int, message: str, title: str) -> Notification:
+        if code == 0:
+            template = self._success
+        else:
+            template = self._failure
+
+        n = Notification(
+            message=message,
+            icon=template.icon,
+            sound=template.sound,
+            title = title
+        )
+
+        return n
+
+    def from_command(self, cmd: _Command) -> Notification:
 
         if cmd.exit_code == 0:
             template = self._success

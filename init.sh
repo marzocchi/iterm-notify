@@ -46,8 +46,8 @@ function iterm-notify() {
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$last_status"
     ;;
   config-set)
-    k="$1"
-    v="$2"
+    local k="$1"
+    local v="$2"
 
     if [[ -z "$k" ]]; then
       echo usage: iterm-notify config-set NAME VALUE >&2
@@ -55,6 +55,13 @@ function iterm-notify() {
     fi
 
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$v"
+    ;;
+  send)
+    local message="$(cat | head -n1)"
+    local type="$1"
+    local title="$2"
+
+    $printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" "$type" "$message" "$title"
     ;;
   *)
     echo "unknown subcommand ${cmd}" | _log

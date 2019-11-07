@@ -16,7 +16,7 @@ class MockBackend(object):
 
 
 class MockFactory(object):
-    def create(self, cmd: Command) -> Notification:
+    def from_command(self, cmd: Command) -> Notification:
         pass
 
 
@@ -27,7 +27,7 @@ class TestNotifyCommandComplete(TestCase):
         self.strategy = MockStrategy()
 
         self.factory = MockFactory()
-        self.factory.create = MagicMock(return_value=Notification(title="title", message="message", icon='foo.png'))
+        self.factory.from_command = MagicMock(return_value=Notification(title="title", message="message", icon='foo.png'))
 
         self.backend = MockBackend()
         self.backend.notify = MagicMock(return_value=None)
@@ -40,7 +40,7 @@ class TestNotifyCommandComplete(TestCase):
 
     def test_after_handler_no_notification(self):
         self.strategy.should_notify = MagicMock(return_value=False)
-        self.factory.create = MagicMock(return_value=Notification(title="title", message="message", icon='foo.png'))
+        self.factory.from_command = MagicMock(return_value=Notification(title="title", message="message", icon='foo.png'))
         self.backend.notify = MagicMock(return_value=None)
 
         self.command.before_handler(["ls -la"])
@@ -49,7 +49,7 @@ class TestNotifyCommandComplete(TestCase):
         self.strategy.should_notify.assert_called_once()
         self.assertEqual("ls -la", self.strategy.should_notify.call_args[0][0].command_line)
 
-        self.factory.create.assert_not_called()
+        self.factory.from_command.assert_not_called()
         self.backend.notify.assert_not_called()
 
     def test_after_handler_notification(self):
@@ -61,8 +61,8 @@ class TestNotifyCommandComplete(TestCase):
         self.strategy.should_notify.assert_called_once()
         self.assertEqual("ls -la", self.strategy.should_notify.call_args[0][0].command_line)
 
-        self.factory.create.assert_called_once()
-        self.assertEqual("ls -la", self.factory.create.call_args[0][0].command_line)
+        self.factory.from_command.assert_called_once()
+        self.assertEqual("ls -la", self.factory.from_command.call_args[0][0].command_line)
 
         self.backend.notify.assert_called_once()
 
@@ -73,7 +73,7 @@ class TestNotifyCommandComplete(TestCase):
             self.command.after_handler(["0"])
 
         self.strategy.should_notify.assert_not_called()
-        self.factory.create.assert_not_called()
+        self.factory.from_command.assert_not_called()
         self.backend.notify.assert_not_called()
 
     def test_before_handler_raises_when_missing_calls_to_after_command(self):
@@ -85,7 +85,7 @@ class TestNotifyCommandComplete(TestCase):
             self.command.before_handler(["ls -la"])
 
         self.strategy.should_notify.assert_not_called()
-        self.factory.create.assert_not_called()
+        self.factory.from_command.assert_not_called()
         self.backend.notify.assert_not_called()
 
 

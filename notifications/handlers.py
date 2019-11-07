@@ -57,8 +57,24 @@ class _NotificationStrategy(typing.Protocol):
 
 
 class _NotificationFactory(typing.Protocol):
-    def create(self, cmd: Command) -> Notification:
+    def create(self, code: int, message: str, title: str) -> Notification:
         pass
+
+    def from_command(self, cmd: Command) -> Notification:
+        pass
+
+
+class Notify(object):
+    def __init__(self, notification_factory: _NotificationFactory, notification_backend: _NotificationBackend):
+        self._notification_factory = notification_factory
+        self._notification_backend = notification_backend
+
+    def notify_handler(self, args: list):
+        if len(args) < 2:
+            raise RuntimeError("not enough arguments, needs at least [code, message, title]")
+
+        n = self._notification_factory.create(code=int(args[0]), message=args[1], title=args[2])
+        self._notification_backend.notify(n)
 
 
 class NotifyCommandComplete(object):
@@ -88,7 +104,7 @@ class NotifyCommandComplete(object):
         self._cmd.done(exit_code, datetime.now())
 
         if self._notification_strategy.should_notify(self._cmd):
-            self._notification_backend.notify(self._notification_factory.create(self._cmd))
+            self._notification_backend.notify(self._notification_factory.from_command(self._cmd))
 
         self._cmd = None
 

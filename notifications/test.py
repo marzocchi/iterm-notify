@@ -40,7 +40,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(0, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("success in 19 seconds", n.title)
         self.assertEqual("some command", n.message)
@@ -57,7 +57,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(1, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("failure in 19 seconds", n.title)
         self.assertEqual("some command", n.message)
@@ -73,7 +73,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(1, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("failure in 19 seconds", n.title)
         self.assertEqual("some command", n.message)
@@ -89,7 +89,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(0, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("success in 19 seconds", n.title)
         self.assertEqual("some command", n.message)
@@ -106,7 +106,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(1, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("failure in 19 seconds", n.title)
         self.assertEqual("some command", n.message)
@@ -124,7 +124,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(0, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("success in 19 seconds", n.title)
         self.assertEqual("some command", n.message)
@@ -140,7 +140,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(0, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
         self.assertEqual("no vars", n.title)
 
     def test_does_not_raise_if_unknown_vars_in_title(self):
@@ -152,7 +152,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(0, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("{some_var}", n.title)
         self.assertEqual("some command", n.message)
@@ -166,7 +166,7 @@ class TestNotificationFactory(TestCase):
         cmd = Command(datetime.fromtimestamp(self.TS_1), "some command")
         cmd.done(0, datetime.fromtimestamp(self.TS_2))
 
-        n = f.create(cmd)
+        n = f.from_command(cmd)
 
         self.assertEqual("19", n.title)
         self.assertEqual("{some_var}", n.message)
