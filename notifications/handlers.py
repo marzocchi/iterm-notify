@@ -1,20 +1,7 @@
 from datetime import datetime, timedelta
 import typing
+import logging
 from notifications import Notification
-
-
-class Dispatcher:
-    def __init__(self):
-        self._handlers: dict[str: typing.Callable[[list], None]] = {}
-
-    def register_handler(self, selector: str, handler: typing.Callable[[list], None]):
-        self._handlers[selector] = handler
-
-    def dispatch(self, selector: str, args: list):
-        if selector not in self._handlers:
-            raise RuntimeError("can't dispatch with unknown selector: {}".format(selector))
-
-        self._handlers[selector](args)
 
 
 class Command(object):
@@ -73,7 +60,7 @@ class Notify(object):
         if len(args) < 2:
             raise RuntimeError("not enough arguments, needs at least [code, message, title]")
 
-        n = self._notification_factory.create(code=int(args[0]), message=args[1], title=args[2])
+        n = self._notification_factory.create(code=int(args[2]), message=args[0], title=args[1])
         self._notification_backend.notify(n)
 
 
@@ -132,9 +119,11 @@ class _NotificationsBackendSelector(typing.Protocol):
 class ConfigHandler(object):
     def __init__(self, timeout: _WithTimeout, success_template: Notification, failure_template: Notification,
                  notifications_backend_selector: _NotificationsBackendSelector,
+                 logger: logging.Logger,
                  on_change: typing.Union[None, typing.Callable[[dict], None]] = None,
                  defaults: dict = {}):
 
+        self._logger = logger
         self._notifications_backend = notifications_backend_selector
         self._success_template = success_template
         self._failure_template = failure_template
@@ -169,6 +158,12 @@ class ConfigHandler(object):
         if 'notifications-backend' in cfg:
             self._notifications_backend.selected = cfg['notifications-backend']
 
+        if 'logger-name' in cfg:
+            self._logger.name = cfg['logger-name']
+
+        if 'logger-level' in cfg:
+            self._logger.setLevel(cfg['logger-level'])
+
     def _dump(self) -> dict:
         return {
             'command-complete-timeout': self._timeout.timeout,
@@ -182,6 +177,9 @@ class ConfigHandler(object):
             'failure-sound': self._failure_template.sound,
 
             'notifications-backend': self._notifications_backend.selected,
+
+            'logger-name': self._logger.name,
+            'logger-level': self._logger.level,
         }
 
     def set_notifications_backend_handler(self, args: list):
@@ -228,6 +226,34 @@ class ConfigHandler(object):
 
     def set_timeout_handler(self, args: list):
         self._timeout.timeout = int(args[0])
+
+        if self._on_change is not None:
+            self._on_change(self._dump())
+
+    def set_logging_name_handler(self, args: list):
+        new_name = args[0]
+        old_name = self._logger.name
+
+        self._logger.critical("changing logger name from {} to {}".format(
+            old_name,
+            new_name
+        ))
+
+        self._logger.name = new_name
+
+        if self._on_change is not None:
+            self._on_change(self._dump())
+
+    def set_logging_level_handler(self, args: list):
+        new_level = args[0]
+        old_level = self._logger.level
+
+        self._logger.critical("changing logger level from {} to {}".format(
+            old_level,
+            new_level
+        ))
+
+        self._logger.setLevel(new_level)
 
         if self._on_change is not None:
             self._on_change(self._dump())

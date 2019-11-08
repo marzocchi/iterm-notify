@@ -13,7 +13,7 @@ class _Exec(typing.Protocol):  # pragma: no cover
 
 class ExecSubprocess(object):
     def exec(self, cmd: list):
-        subprocess.run(cmd, input=None, stdin=None, capture_output=False, check=True, timeout=1)
+        subprocess.run(cmd, input=None, stdin=None, capture_output=False, check=True, timeout=5)
 
 
 class SwitchableNotifier(object):

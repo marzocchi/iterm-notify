@@ -34,19 +34,19 @@ class MockApp(object):
 
 class TestIfSlow(TestCase):
     def test_set_timeout(self):
-        s = strategies.IfSlow(timeout=2)
+        s = strategies.WhenSlow(timeout=2)
 
         s.timeout = 5
         self.assertEqual(5, s.timeout)
 
     def test_will_notify(self):
-        s = strategies.IfSlow(timeout=2)
+        s = strategies.WhenSlow(timeout=2)
 
         command = MockCommand(exit_code=0, duration=timedelta(seconds=5))
         self.assertTrue(s.should_notify(command))
 
     def test_will_not_notify(self):
-        s = strategies.IfSlow(timeout=6)
+        s = strategies.WhenSlow(timeout=6)
 
         command = MockCommand(exit_code=0, duration=timedelta(seconds=5))
         self.assertFalse(s.should_notify(command))
@@ -54,49 +54,49 @@ class TestIfSlow(TestCase):
 
 class TestIfInactive(TestCase):
     def test_set_timeout(self):
-        s = strategies.IfInactive(app=MockApp(active=True, current_session_id=None), session_id="foo", timeout=2)
+        s = strategies.WhenInactive(app=MockApp(active=True, current_session_id=None), session_id="foo", when_slow=strategies.WhenSlow(timeout=2))
 
         s.timeout = 5
         self.assertEqual(5, s.timeout)
 
     def test_will_notify_success_when_not_current_session(self):
         app = MockApp(active=True, current_session_id="bar")
-        s = strategies.IfInactive(app=app, timeout=2, session_id="foo")
+        s = strategies.WhenInactive(app=app, when_slow=strategies.WhenSlow(timeout=2), session_id="foo")
 
         command = MockCommand(exit_code=0, duration=timedelta(seconds=5))
         self.assertTrue(s.should_notify(command))
 
     def test_will_notify_success_when_app_not_active(self):
         app = MockApp(active=False, current_session_id="foo")
-        s = strategies.IfInactive(app=app, timeout=2, session_id="foo")
+        s = strategies.WhenInactive(app=app, when_slow=strategies.WhenSlow(timeout=2), session_id="foo")
 
         command = MockCommand(exit_code=0, duration=timedelta(seconds=5))
         self.assertTrue(s.should_notify(command))
 
     def test_will_not_notify_success_for_fast_commands(self):
         app = MockApp(active=False, current_session_id="bar")
-        s = strategies.IfInactive(app=app, timeout=2, session_id="foo")
+        s = strategies.WhenInactive(app=app, when_slow=strategies.WhenSlow(timeout=2), session_id="foo")
 
         command = MockCommand(exit_code=0, duration=timedelta(seconds=1))
         self.assertFalse(s.should_notify(command))
 
     def test_will_notify_failure_for_fast_commands(self):
         app = MockApp(active=True, current_session_id="bar")
-        s = strategies.IfInactive(app=app, timeout=2, session_id="foo")
+        s = strategies.WhenInactive(app=app, when_slow=strategies.WhenSlow(timeout=2), session_id="foo")
 
         command = MockCommand(exit_code=1, duration=timedelta(seconds=1))
         self.assertTrue(s.should_notify(command))
 
     def test_will_not_notify_success_when_in_front(self):
         app = MockApp(active=True, current_session_id="foo")
-        s = strategies.IfInactive(app=app, timeout=2, session_id="foo")
+        s = strategies.WhenInactive(app=app, when_slow=strategies.WhenSlow(timeout=2), session_id="foo")
 
         command = MockCommand(exit_code=0, duration=timedelta(seconds=4))
         self.assertFalse(s.should_notify(command))
 
     def test_will_not_notify_failure_when_current_session(self):
         app = MockApp(active=True, current_session_id="foo")
-        s = strategies.IfInactive(app=app, timeout=2, session_id="foo")
+        s = strategies.WhenInactive(app=app, when_slow=strategies.WhenSlow(timeout=2), session_id="foo")
 
         command = MockCommand(exit_code=1, duration=timedelta(seconds=4))
         self.assertFalse(s.should_notify(command))

@@ -1,23 +1,33 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from notifications.handlers import NotifyCommandComplete, Command, Dispatcher, ConfigHandler
+from notifications.handlers import NotifyCommandComplete, Command, ConfigHandler
 from notifications import Notification
+from notifications.dispatcher import Dispatcher
+
+
+class _Logger(object):
+    def debug(self, msg: str): pass
+
+    def info(self, msg: str): pass
+
+    def warning(self, msg: str): pass
+
+    def error(self, msg: str): pass
+
+    def critical(self, msg: str): pass
 
 
 class MockStrategy(object):
-    def should_notify(self, cmd: Command) -> bool:
-        pass
+    def should_notify(self, cmd: Command) -> bool: pass
 
 
 class MockBackend(object):
-    def notify(self, n: Notification):
-        pass
+    def notify(self, n: Notification): pass
 
 
 class MockFactory(object):
-    def from_command(self, cmd: Command) -> Notification:
-        pass
+    def from_command(self, cmd: Command) -> Notification: pass
 
 
 class TestNotifyCommandComplete(TestCase):
@@ -27,7 +37,8 @@ class TestNotifyCommandComplete(TestCase):
         self.strategy = MockStrategy()
 
         self.factory = MockFactory()
-        self.factory.from_command = MagicMock(return_value=Notification(title="title", message="message", icon='foo.png'))
+        self.factory.from_command = MagicMock(
+            return_value=Notification(title="title", message="message", icon='foo.png'))
 
         self.backend = MockBackend()
         self.backend.notify = MagicMock(return_value=None)
@@ -40,7 +51,8 @@ class TestNotifyCommandComplete(TestCase):
 
     def test_after_handler_no_notification(self):
         self.strategy.should_notify = MagicMock(return_value=False)
-        self.factory.from_command = MagicMock(return_value=Notification(title="title", message="message", icon='foo.png'))
+        self.factory.from_command = MagicMock(
+            return_value=Notification(title="title", message="message", icon='foo.png'))
         self.backend.notify = MagicMock(return_value=None)
 
         self.command.before_handler(["ls -la"])
@@ -89,36 +101,6 @@ class TestNotifyCommandComplete(TestCase):
         self.backend.notify.assert_not_called()
 
 
-class MockHandler(object):
-    def handle(self, args: list) -> None:
-        pass
-
-
-class TestDispatcher(TestCase):
-    def test_dispatch(self):
-        foo = MockHandler()
-        foo.handle = MagicMock()
-
-        bar = MockHandler()
-        bar.handle = MagicMock()
-
-        d = Dispatcher()
-
-        d.register_handler("foo", foo.handle)
-        d.register_handler("bar", bar.handle)
-
-        d.dispatch("foo", ['a', 'b'])
-
-        foo.handle.assert_called_with(['a', 'b'])
-        bar.handle.assert_not_called()
-
-    def test_dispatcher_raises(self):
-        d = Dispatcher()
-
-        with self.assertRaises(RuntimeError):
-            d.dispatch("foo", ['a'])
-
-
 class MockWithTimeout(object):
     _timeout: int = 0
 
@@ -151,7 +133,7 @@ class TestConfigHandler(TestCase):
         self.failure_template = Notification(title="", message="")
         self.timeout = MockWithTimeout()
 
-        self.cfg = ConfigHandler(timeout=self.timeout, success_template=self.success_template,
+        self.cfg = ConfigHandler(logger=_Logger(), timeout=self.timeout, success_template=self.success_template,
                                  failure_template=self.failure_template,
                                  notifications_backend_selector=self.notifications_backend_selector)
 

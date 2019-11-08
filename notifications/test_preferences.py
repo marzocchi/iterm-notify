@@ -5,6 +5,18 @@ from tempfile import NamedTemporaryFile
 import json
 
 
+class _Logger(object):
+    def debug(self, msg: str): pass
+
+    def info(self, msg: str): pass
+
+    def warning(self, msg: str): pass
+
+    def error(self, msg: str): pass
+
+    def critical(self, msg: str): pass
+
+
 class MockStorage(object):
     def load(self) -> dict:
         pass
@@ -19,7 +31,7 @@ class TestPreferences(TestCase):
 
         storage.load = MagicMock(return_value={'some_session': {'some_pref': 1}})
 
-        prefs = preferences.Preferences(storage=storage)
+        prefs = preferences.Preferences(storage=storage, logger=_Logger())
         prefs.load()
 
         self.assertEqual({'some_pref': 1}, prefs.get('some_session'))
@@ -33,7 +45,7 @@ class TestPreferences(TestCase):
         storage.load = MagicMock(
             return_value={'some_session': {'some_pref': 1}, 'some_other_session': {'some_prefs': 2}})
 
-        prefs = preferences.Preferences(storage=storage)
+        prefs = preferences.Preferences(storage=storage, logger=_Logger())
         prefs.load()
 
         prefs.prune(['some_other_session'])
@@ -46,7 +58,7 @@ class TestPreferences(TestCase):
         storage.load = MagicMock(return_value={})
         storage.save = MagicMock(return_value=None)
 
-        prefs = preferences.Preferences(storage=storage)
+        prefs = preferences.Preferences(storage=storage, logger=_Logger())
         prefs.load()
 
         f = prefs.handler("some_session")
@@ -82,4 +94,3 @@ class TestFileStorage(TestCase):
         fs.save({'some_session': {'some_prefs': 1}})
 
         self.assertEqual({'some_session': {'some_prefs': 1}}, json.loads(f.read()))
-

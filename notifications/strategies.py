@@ -13,7 +13,7 @@ class _Command(typing.Protocol):
         pass
 
 
-class _App(typing.Protocol):
+class App(typing.Protocol):
     @property
     def active(self) -> bool:
         pass
@@ -41,7 +41,7 @@ class iTermApp(object):
         return None
 
 
-class IfSlow(object):
+class WhenSlow(object):
     def __init__(self, timeout: int):
         self._timeout = timeout
 
@@ -57,23 +57,30 @@ class IfSlow(object):
         self._timeout = v
 
 
-class IfInactive(IfSlow):
-    def __init__(self, app: _App, session_id: str, timeout: int):
-        super().__init__(timeout=timeout)
+class WhenInactive():
+    def __init__(self, app: App, session_id: str, when_slow:WhenSlow):
+        self._app = app
+        self._session_id = session_id
+        self._when_slow = when_slow
 
-        self.app = app
-        self.session_id = session_id
+    @property
+    def timeout(self) -> int:
+        return self._when_slow.timeout
+
+    @timeout.setter
+    def timeout(self, v: int):
+        self._when_slow.timeout = v
 
     def should_notify(self, cmd: _Command) -> bool:
         # no need to notify about a successful command that run fast
         failed = cmd.exit_code > 0
-        slow = super().should_notify(cmd)
+        slow = self._when_slow.should_notify(cmd)
 
         if not failed and not slow:
             return False
 
         # if the command failed or was slow, notify if this is not the current session or the app is not active
         # (as we don't if the session's tab is active, but eg. covered by some other window)
-        active_session = self.app.active and self.session_id == self.app.current_session_id
+        active_session = self._app.active and self._session_id == self._app.current_session_id
 
         return not active_session

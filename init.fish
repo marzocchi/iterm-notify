@@ -21,7 +21,11 @@ function iterm-notify
   set argv $argv[2..-1]
 
 
-  set iterm_notify_identity_file "$HOME/.iterm-notify-identity"
+  if test -n "$ITERM_NOTIFY_IDENTITY_FILE"
+    set iterm_notify_identity_file "$ITERM_NOTIFY_IDENTITY_FILE"
+  else
+    set iterm_notify_identity_file "$HOME/.iterm-notify-identity"
+  end
 
   if test -s "$iterm_notify_identity_file"
     set iterm_notify_identity (head -n1 "$iterm_notify_identity_file" | sed 's/^\ *//' | sed 's/\ *$//')
@@ -63,10 +67,11 @@ function iterm-notify
     printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-$k (echo -n "$v" | _base64)
   case send
     read message
-    set type "$argv[1]"
-    set title "$argv[2]"
+    set title "$argv[1]"
+    set type "$argv[2]"
 
-    printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" (echo -n "$type" | _base64) (echo -n "$message" | _base64) (echo -n "$title" | _base64)
+    printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" (echo -n "$message" | _base64) (echo -n "$title" | _base64) (echo -n "$type" | _base64)
+
   case '*'
     echo "unknown subcommand $cmd" | log
     return 1

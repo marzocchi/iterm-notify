@@ -1,5 +1,6 @@
 import typing
 import json
+import logging
 from pathlib import Path
 
 
@@ -31,7 +32,8 @@ class FileStorage:
 
 
 class Preferences:
-    def __init__(self, storage: Storage):
+    def __init__(self, storage: Storage, logger: logging.Logger):
+        self._logger = logger
         self._storage = storage
         self._data = {}
 
@@ -46,9 +48,14 @@ class Preferences:
 
     def prune(self, current_session_ids: list):
         new_data = {}
+        discarded = []
         for sid in current_session_ids:
             if sid in self._data:
                 new_data[sid] = self._data[sid]
+            else:
+                discarded.append(sid)
+
+        self._logger.debug("discarded sessions: {}".format([k for k in discarded]))
 
         self._data = new_data
         self._save()

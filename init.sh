@@ -1,4 +1,4 @@
-function iterm-notify() {
+iterm-notify() {
   local printf cmd
 
   base64() {
@@ -32,10 +32,14 @@ function iterm-notify() {
     printf="printf"
   fi
 
-  iterm_notify_identity_file="$HOME/.iterm-notify-identity"
+  if [[ -n "$ITERM_NOTIFY_IDENTITY_FILE" ]]; then
+    iterm_notify_identity_file="$ITERM_NOTIFY_IDENTITY_FILE"
+  else
+    iterm_notify_identity_file="$HOME/.iterm-notify-identity"
+  fi
 
   if [[ -s "$iterm_notify_identity_file" ]]; then
-    iterm_notify_identity=$(head -n1 "$iterm_notify_identity_file" | sed 's/^\ *//' | sed 's/\ *$//')
+    iterm_notify_identity=$(head -n1 "$iterm_notify_identity_file" 2>/dev/null | sed 's/^\ *//' | sed 's/\ *$//')
   fi
 
   if [[ -z "$iterm_notify_identity" ]]; then
@@ -79,13 +83,13 @@ function iterm-notify() {
   send)
     local type message title
     message="$(cat | head -n1)"
-    type="$1"
-    title="$2"
+    title="$1"
+    type="$2"
 
     $printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" \
-      "$(echo -n "$type" | base64)" \
       "$(echo -n "$message" | base64)" \
-      "$(echo -n "$title" | base64)"
+      "$(echo -n "$title" | base64)" \
+      "$(echo -n "$type" | base64)"
     ;;
   *)
     echo "unknown subcommand ${cmd}" | log
