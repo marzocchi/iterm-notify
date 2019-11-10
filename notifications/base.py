@@ -67,7 +67,7 @@ class NotificationFactory(object):
             'exit_code': cmd.exit_code
         }
 
-    def create(self, code: int, message: str, title: str) -> Notification:
+    def create(self, message: str, title: str, code: int = 0) -> Notification:
         if code == 0:
             template = self._success
         else:

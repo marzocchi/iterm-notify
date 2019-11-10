@@ -28,10 +28,9 @@ def create_test_func(shell_name: str, init: str, command: str, expected: str, in
             env=env
         )
 
-        err = result.stderr.decode('UTF-8')
         out = result.stdout.decode('UTF-8')
 
-        self.assertEqual('', err)
+        self.assertEqual(0, result.returncode)
         self.assertIn("Custom=id=FOO_ID:", out)
         self.assertIn(expected, out)
 
@@ -51,9 +50,14 @@ tests = [
     },
     {
         'name': 'notify',
-        'call': 'send title 1',
-        'expect': 'notify,bWVzc2FnZQ==,dGl0bGU=,MQ==',
+        'call': 'send title',
+        'expect': 'notify,bWVzc2FnZQ==,dGl0bGU=',
         'input': b'message',
+    },
+    {
+        'name': 'notify-with-inline-message',
+        'call': 'send title message',
+        'expect': 'notify,bWVzc2FnZQ==,dGl0bGU=',
     },
     {
         'name': 'config-set',

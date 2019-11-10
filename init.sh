@@ -81,15 +81,31 @@ iterm-notify() {
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$(echo -n "$v" | base64)"
     ;;
   send)
-    local type message title
-    message="$(cat | head -n1)"
+    local message title
+
     title="$1"
-    type="$2"
+    message="$2"
+
+    if [[ -z "$title" ]]; then
+      echo usage: iterm-notify send TITLE MESSAGE | log
+      echo usage: echo MESSAGE \| iterm-notify send TITLE | log
+      return 1
+    fi
+
+    if [[ -z "$message" ]]; then
+      echo "go ahead and type your message" | log
+      read -r message
+    fi
+
+    if [[ -z "$message" ]]; then
+      echo usage: iterm-notify send TITLE MESSAGE | log
+      echo usage: echo MESSAGE \| iterm-notify send TITLE | log
+      return 1
+    fi
 
     $printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" \
       "$(echo -n "$message" | base64)" \
-      "$(echo -n "$title" | base64)" \
-      "$(echo -n "$type" | base64)"
+      "$(echo -n "$title" | base64)"
     ;;
   *)
     echo "unknown subcommand ${cmd}" | log

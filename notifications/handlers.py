@@ -58,10 +58,11 @@ class Notify(object):
 
     def notify_handler(self, args: list):
         if len(args) < 2:
-            raise RuntimeError("not enough arguments, needs at least [code, message, title]")
+            raise RuntimeError("not enough arguments, needs message and title ")
 
-        n = self._notification_factory.create(code=int(args[2]), message=args[0], title=args[1])
-        self._notification_backend.notify(n)
+        self._notification_backend.notify(
+            self._notification_factory.create(code=0, message=args[0], title=args[1])
+        )
 
 
 class NotifyCommandComplete(object):

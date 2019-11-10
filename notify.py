@@ -74,8 +74,8 @@ async def main(connection):
             while True:
                 try:
                     matches = await mon.async_get()
-                except Exception as e:
-                    logging.error("ex")
+                except:
+                    logging.exception("can't receive control sequence")
                     continue
 
                 cmd_name = matches.group(1)

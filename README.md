@@ -6,14 +6,19 @@ Desktop notifications for local and remote long-running commands in iTerm2 and Z
 Usage
 --- 
 
-Requirements
----
+iTerm-notify hooks into your shell and iTerm to send you Desktop notifications when those commands you started and
+forgot about in some tab finally finish. To use it, follow the instructions below to run the `notify.py` script with
+iTerm and load `init.sh` (or `init.fish`) in your shell's initialization file.
+
+Once iTerm-notify is hooked up, you can also use `iterm-notify send TITLE MESSAGE` to immediately send notifications
+from the shell.
+
+### Requirements
 - iTerm2 with the Python API enabled with version > 3.8 of the Python Runtime (at the time of writing, this is only
   available with the beta)
 - Zsh, Fish or Bash (with [bash-preexec][bash-preexec])
 
-Installation
----
+### Installation
 1. Clone this repository
 1. Create your "identity file" by entering a random string as the first line in `$HOME/.iterm-notify-identity`
     - The _identity_ is an important **security feature** of [iTerm2's Custom Control Sequences][explain-id] support, so don't be lazy
@@ -61,7 +66,7 @@ sourcing `init.sh`.
 
 - Set the notification backend:
 
-    ```shell script
+    ```shell
     iterm-notify config-set notifications-backend terminal-notifier 
     ```
     
@@ -75,7 +80,7 @@ sourcing `init.sh`.
          
 - Customize the notifications (check above for what will actually work with your preferred backend):
 
-    ```shell script
+    ```shell
     iterm-notify config-set - <<'FOO'
         success-title Command finished successfully!
         success-icon /path/to/success-icon.png
@@ -96,7 +101,7 @@ sourcing `init.sh`.
     
 - Set a different timeout for notifications:
 
-    ```shell script
+    ```shell
     iterm-notify config-set command-complete-timeout 15
     ```
 

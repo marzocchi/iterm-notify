@@ -66,11 +66,28 @@ function iterm-notify
 
     printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-$k (echo -n "$v" | _base64)
   case send
-    read message
     set title "$argv[1]"
-    set type "$argv[2]"
+    set message "$argv[2]"
 
-    printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" (echo -n "$message" | _base64) (echo -n "$title" | _base64) (echo -n "$type" | _base64)
+    if test -z "$title"
+      echo usage: iterm-notify send TITLE MESSAGE | log
+      echo usage: echo MESSAGE \| iterm-notify send TITLE | log
+      return 1
+    end
+
+    if test -z "$message"
+      read message
+
+      if test -z "$message"
+        echo usage: iterm-notify send TITLE MESSAGE | log
+        echo usage: echo MESSAGE \| iterm-notify send TITLE | log
+        return 1
+      end
+    end
+
+    printf "\033]1337;Custom=id=%s:%s,%s,%s\a" "$iterm_notify_identity" "notify" \
+      (echo -n "$message" | _base64)\
+      (echo -n "$title" | _base64)
 
   case '*'
     echo "unknown subcommand $cmd" | log
