@@ -93,7 +93,6 @@ iterm-notify() {
     fi
 
     if [[ -z "$message" ]]; then
-      echo "go ahead and type your message" | log
       read -r message
     fi
 
@@ -113,12 +112,17 @@ iterm-notify() {
   esac
 }
 
+_iterm_notify_did_run_before_hook=""
+
 _iterm_notify_before_command_hook() {
   iterm-notify before-command "$1"
+  _iterm_notify_did_run_before_hook="yep"
 }
 
 _iterm_notify_after_command_hook() {
-  iterm-notify after-command "$?"
+  local last_status="$?"
+  test -n "$_iterm_notify_did_run_before_hook" && iterm-notify after-command "$last_status"
+  _iterm_notify_did_run_before_hook=""
 }
 
 if [[ -n "$ZSH_VERSION" ]]; then
