@@ -1,29 +1,20 @@
 import iterm2
-import typing
+from typing import Union, Protocol
+from abc import ABC, abstractmethod
 from datetime import timedelta
 
 
-class _Command(typing.Protocol):
-    @property
-    def exit_code(self) -> int:
-        pass
-
-    @property
-    def duration(self) -> timedelta:
-        pass
-
-
-class App(typing.Protocol):
+class _App(Protocol):  # pragma: no cover
     @property
     def active(self) -> bool:
         pass
 
     @property
-    def current_session_id(self) -> typing.Union[None, str]:
+    def current_session_id(self) -> Union[None, str]:
         pass
 
 
-class iTermApp(object):
+class iTermApp:
     def __init__(self, iterm: iterm2.App):
         self._iterm = iterm
 
@@ -32,7 +23,7 @@ class iTermApp(object):
         return self._iterm.app_active
 
     @property
-    def current_session_id(self) -> typing.Union[None, str]:
+    def current_session_id(self) -> Union[None, str]:
         for tab in self._iterm.current_window.tabs:
             for s in tab.sessions:
                 if tab.active_session_id == s.session_id and tab.tab_id == self._iterm.current_window.selected_tab_id:
@@ -41,7 +32,20 @@ class iTermApp(object):
         return None
 
 
-class WhenSlow(object):
+class _Command(Protocol):
+    @property
+    def exit_code(self) -> int: pass
+
+    @property
+    def duration(self) -> timedelta: pass
+
+
+class Strategy(ABC):
+    @abstractmethod
+    def should_notify(self, cmd: _Command) -> bool: pass
+
+
+class WhenSlow(Strategy):
     def __init__(self, timeout: int):
         self._timeout = timeout
 
@@ -57,8 +61,8 @@ class WhenSlow(object):
         self._timeout = v
 
 
-class WhenInactive():
-    def __init__(self, app: App, session_id: str, when_slow:WhenSlow):
+class WhenInactive(Strategy):
+    def __init__(self, app: _App, session_id: str, when_slow: WhenSlow):
         self._app = app
         self._session_id = session_id
         self._when_slow = when_slow

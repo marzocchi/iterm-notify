@@ -1,23 +1,30 @@
-from notifications import Notification
-from tempfile import NamedTemporaryFile
-import typing
-import iterm2
 import subprocess
+from tempfile import NamedTemporaryFile
+from typing import Protocol, Optional
+from notifications import Notification
+from abc import ABC, abstractmethod
+import iterm2
 import asyncio
+import logging
 
 
-class _Exec(typing.Protocol):  # pragma: no cover
-    def exec(self, cmd: list):
-        pass
+class _Exec(Protocol):  # pragma: no cover
+    def exec(self, cmd: list): pass
 
 
-class ExecSubprocess(object):
+class ExecSubprocess:
     def exec(self, cmd: list):
         subprocess.run(cmd, input=None, stdin=None, capture_output=False, check=True, timeout=5)
 
 
-class SwitchableNotifier(object):
-    def __init__(self, notifiers: dict, selected: str):
+class Backend(ABC):
+    @abstractmethod
+    def notify(self, n: Notification): pass
+
+
+class Selectable(Backend):
+    def __init__(self, notifiers: dict, selected: str, logger: Optional[logging.Logger] = None):
+        self._logger = logger
         self._notifiers = notifiers
         self._selected = ''
         self.selected = selected
@@ -34,19 +41,22 @@ class SwitchableNotifier(object):
         self._selected = v
 
     def notify(self, n: Notification):
+        self._logger and self._logger.info("sending notification with {} backend".format(self._selected))
         self._notifiers[self._selected].notify(n)
 
 
-class iTermNotifier(object):
-    def __init__(self, conn: iterm2.Connection):
+class Iterm(Backend):
+    def __init__(self, conn: iterm2.Connection, logger: Optional[logging.Logger] = None):
+        self._logger = logger
         self._conn = conn
 
     def notify(self, n: Notification):
         alert = iterm2.Alert(n.title, n.message)
+        self._logger and self._logger.info("sending notification: {}".format(n))
         asyncio.get_event_loop().create_task(alert.async_run(self._conn))
 
 
-class OsaScriptNotifier(object):
+class OsaScript(Backend):
     _SCRIPT = "to run args\n" \
               "  tell application \"iTerm\"\n" \
               "    if item 3 of args is equal to \"\"\n" \
@@ -58,7 +68,8 @@ class OsaScriptNotifier(object):
               "  end tell\n" \
               "end run"
 
-    def __init__(self, ex: _Exec):
+    def __init__(self, ex: _Exec, logger: Optional[logging.Logger] = None):
+        self._logger = logger
         self._exec = ex
 
     def notify(self, n: Notification):
@@ -74,11 +85,13 @@ class OsaScriptNotifier(object):
                 "" if n.sound is None else n.sound
             ]
 
+            self._logger and self._logger.info("sending notification: {}".format(n))
             self._exec.exec(cmd)
 
 
-class TerminalNotifier(object):
-    def __init__(self, ex: _Exec, path: str = 'terminal-notifier'):
+class TerminalNotifier(Backend):
+    def __init__(self, ex: _Exec, path: str = 'terminal-notifier', logger: Optional[logging.Logger] = None):
+        self._logger = logger
         self._exec = ex
         self.terminal_notifier_path = path
 
@@ -101,4 +114,5 @@ class TerminalNotifier(object):
             cmd.append('-sound')
             cmd.append(n.sound)
 
+        self._logger and self._logger.info("sending notification: {}".format(n))
         self._exec.exec(cmd)

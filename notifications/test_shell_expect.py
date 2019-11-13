@@ -1,6 +1,5 @@
 from unittest import TestCase, skipUnless
 import tempfile
-from os import environ
 import os
 import pexpect
 
@@ -22,7 +21,7 @@ class TestInteractiveShell(TestCase):
 
         self.home = tempfile.mkdtemp()
 
-        self.env = environ.copy()
+        self.env = os.environ.copy()
         self.env.update({
             'ITERM_NOTIFY_IDENTITY_FILE': self.id_file.name,
             'TERM': 'xterm-256color',

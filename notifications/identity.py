@@ -1,6 +1,11 @@
 from pathlib import Path
 
 
+def load_from_default_path() -> str:
+    home = Path.home()
+    return load(home.joinpath('.iterm-notify-identity'))
+
+
 def load(path: Path) -> str:
     try:
         with open(file=str(path), mode='r') as f:

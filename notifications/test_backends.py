@@ -1,16 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, ANY
-from notifications import backends, Notification
-
-
-class MockExec(object):
-    def exec(self, cmd: list):
-        pass
-
-
-class MockNotifier(object):
-    def notify(self, n: Notification):
-        pass
+from notifications import *
+from notifications.backends import OsaScript, TerminalNotifier, Selectable
 
 
 class TestTerminalNotifier(TestCase):
@@ -18,10 +9,9 @@ class TestTerminalNotifier(TestCase):
                 'com.googlecode.iterm2']
 
     def test_notify(self):
-        ex = MockExec()
-        ex.exec = MagicMock(return_value=None)
+        ex = MagicMock(['exec'])
 
-        notifier = backends.TerminalNotifier(ex, path="/some/path")
+        notifier = TerminalNotifier(ex, path="/some/path")
 
         n = Notification(title="sorry to bother you", message="but something happened!", icon=None)
         notifier.notify(n)
@@ -30,10 +20,9 @@ class TestTerminalNotifier(TestCase):
             self.DEFAULTS + ['-title', 'sorry to bother you', '-message', 'but something happened!'])
 
     def test_notify_with_icon(self):
-        ex = MockExec()
-        ex.exec = MagicMock(return_value=None)
+        ex = MagicMock(['exec'])
 
-        notifier = backends.TerminalNotifier(ex, path="/some/path")
+        notifier = TerminalNotifier(ex, path="/some/path")
 
         n = Notification(title="sorry to bother you", message="but something happened!", icon='foo.png')
         notifier.notify(n)
@@ -47,10 +36,9 @@ class TestOsaScriptNotifier(TestCase):
     DEFAULTS = ['osascript', ANY]
 
     def test_notify(self):
-        ex = MockExec()
-        ex.exec = MagicMock(return_value=None)
+        ex = MagicMock(['exec'])
 
-        notifier = backends.OsaScriptNotifier(ex)
+        notifier = OsaScript(ex)
 
         n = Notification(title="sorry to bother you", message="but something happened!", sound=None)
         notifier.notify(n)
@@ -59,10 +47,9 @@ class TestOsaScriptNotifier(TestCase):
             self.DEFAULTS + ['but something happened!', 'sorry to bother you', ''])
 
     def test_notify_with_icon(self):
-        ex = MockExec()
-        ex.exec = MagicMock(return_value=None)
+        ex = MagicMock(['exec'])
 
-        notifier = backends.OsaScriptNotifier(ex)
+        notifier = OsaScript(ex)
 
         n = Notification(title="sorry to bother you", message="but something happened!", sound='Glass')
         notifier.notify(n)
@@ -74,23 +61,22 @@ class TestOsaScriptNotifier(TestCase):
 class TestSwitchableNotifier(TestCase):
     def test_raises(self):
         with self.assertRaises(RuntimeError):
-            backends.SwitchableNotifier({}, 'n1')
+            Selectable({}, 'n1')
 
-        n1 = MockNotifier()
-        sw = backends.SwitchableNotifier({'n1': n1}, 'n1')
+        n1 = MagicMock()
+        sw = Selectable({'n1': n1}, 'n1')
 
         with self.assertRaises(RuntimeError):
             sw.selected = 'n2'
 
-
     def test_switches_with_first_selection(self):
-        n1 = MockNotifier()
+        n1 = MagicMock(['notify'])
         n1.notify = MagicMock()
 
-        n2 = MockNotifier()
+        n2 = MagicMock(['notify'])
         n2.notify = MagicMock()
 
-        sw = backends.SwitchableNotifier(
+        sw = Selectable(
             {
                 'n1': n1,
                 'n2': n2,
@@ -106,13 +92,13 @@ class TestSwitchableNotifier(TestCase):
         n2.notify.assert_called_once_with(n)
 
     def test_switches(self):
-        n1 = MockNotifier()
+        n1 = MagicMock(['notify'])
         n1.notify = MagicMock()
 
-        n2 = MockNotifier()
+        n2 = MagicMock(['notify'])
         n2.notify = MagicMock()
 
-        sw = backends.SwitchableNotifier(
+        sw = Selectable(
             {
                 'n1': n1,
                 'n2': n2,
@@ -127,4 +113,3 @@ class TestSwitchableNotifier(TestCase):
 
         n1.notify.assert_called_once_with(n)
         n2.notify.assert_not_called()
-

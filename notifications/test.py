@@ -1,7 +1,5 @@
 from unittest import TestCase
-
-from notifications import NotificationFactory, Notification
-from notifications.handlers import Command
+from notifications import Command, Factory, Notification
 from datetime import datetime
 
 
@@ -25,12 +23,38 @@ class TestNotification(TestCase):
         self.assertEqual('Glass', n.sound)
 
 
-class TestNotificationFactory(TestCase):
+class TestFactory(TestCase):
     TS_1 = 1572889271
     TS_2 = 1572889290
 
-    def test_create_from_successful_command(self):
-        f = NotificationFactory(
+    def test_create_success(self):
+        f = Factory(
+            success=Notification(title="", message="", icon="success.png", sound="Success"),
+            failure=Notification(title="", message="", icon="failure.png", sound="Failure"),
+        )
+
+        n = f.create("message", "title")
+
+        self.assertEqual("message", n.message)
+        self.assertEqual("title", n.title)
+        self.assertEqual("success.png", n.icon)
+        self.assertEqual("Success", n.sound)
+
+    def test_create_failure(self):
+        f = Factory(
+            success=Notification(title="", message="", icon="success.png", sound="Success"),
+            failure=Notification(title="", message="", icon="failure.png", sound="Failure"),
+        )
+
+        n = f.create("message", "title", success=False)
+
+        self.assertEqual("message", n.message)
+        self.assertEqual("title", n.title)
+        self.assertEqual("failure.png", n.icon)
+        self.assertEqual("Failure", n.sound)
+
+    def test_from_command_successful(self):
+        f = Factory(
             success=Notification(title="success in {duration_seconds:d} seconds", message="{command_line}",
                                  icon='success.png'),
             failure=Notification(title="failure in {duration_seconds:d} seconds", message="{command_line}",
@@ -46,8 +70,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("some command", n.message)
         self.assertEqual("success.png", n.icon)
 
-    def test_create_from_failed_command(self):
-        f = NotificationFactory(
+    def test_from_command_failed(self):
+        f = Factory(
             success=Notification(title="success in {duration_seconds:d} seconds", message="{command_line}",
                                  icon='success.png'),
             failure=Notification(title="failure in {duration_seconds:d} seconds", message="{command_line}",
@@ -63,8 +87,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("some command", n.message)
         self.assertEqual("failure.png", n.icon)
 
-    def test_create_failure_without_icon(self):
-        f = NotificationFactory(
+    def test_from_command_failed_without_icon(self):
+        f = Factory(
             success=Notification(title="success in {duration_seconds:d} seconds", message="{command_line}",
                                  icon='success.png'),
             failure=Notification(title="failure in {duration_seconds:d} seconds", message="{command_line}")
@@ -79,8 +103,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("some command", n.message)
         self.assertIsNone(n.icon)
 
-    def test_create_success_without_icon(self):
-        f = NotificationFactory(
+    def test_from_command_successful_without_icon(self):
+        f = Factory(
             success=Notification(title="success in {duration_seconds:d} seconds", message="{command_line}"),
             failure=Notification(title="failure in {duration_seconds:d} seconds", message="{command_line}",
                                  icon='failure.png')
@@ -95,8 +119,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("some command", n.message)
         self.assertIsNone(n.icon)
 
-    def test_create_failure_without_sound(self):
-        f = NotificationFactory(
+    def test_from_command_failure_without_sound(self):
+        f = Factory(
             success=Notification(title="success in {duration_seconds:d} seconds", message="{command_line}",
                                  icon='success.png', sound='Glass'),
             failure=Notification(title="failure in {duration_seconds:d} seconds", message="{command_line}",
@@ -113,8 +137,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("failure.png", n.icon)
         self.assertIsNone(n.sound)
 
-    def test_create_success_without_sound(self):
-        f = NotificationFactory(
+    def test_from_command_successful_without_sound(self):
+        f = Factory(
             success=Notification(title="success in {duration_seconds:d} seconds", message="{command_line}",
                                  icon='success.png'),
             failure=Notification(title="failure in {duration_seconds:d} seconds", message="{command_line}",
@@ -131,8 +155,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("success.png", n.icon)
         self.assertIsNone(n.sound)
 
-    def test_can_omit_vars(self):
-        f = NotificationFactory(
+    def test_from_command_without_vars(self):
+        f = Factory(
             success=Notification(title="no vars", message="{command_line}"),
             failure=Notification(title="no vars", message="{command_line}")
         )
@@ -143,8 +167,8 @@ class TestNotificationFactory(TestCase):
         n = f.from_command(cmd)
         self.assertEqual("no vars", n.title)
 
-    def test_does_not_raise_if_unknown_vars_in_title(self):
-        f = NotificationFactory(
+    def test_from_command_does_not_raise_with_unknown_vars_in_title(self):
+        f = Factory(
             success=Notification(title="{some_var}", message="{command_line}"),
             failure=Notification(title="{some_var}", message="{command_line}")
         )
@@ -157,8 +181,8 @@ class TestNotificationFactory(TestCase):
         self.assertEqual("{some_var}", n.title)
         self.assertEqual("some command", n.message)
 
-    def test_does_not_raise_if_unknown_vars_in_message(self):
-        f = NotificationFactory(
+    def test_from_command_does_not_raise_with_unknown_vars_in_message(self):
+        f = Factory(
             success=Notification(title="{duration_seconds}", message="{some_var}"),
             failure=Notification(title="{duration_seconds}", message="{some_var}")
         )

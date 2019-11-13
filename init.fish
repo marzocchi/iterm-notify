@@ -98,18 +98,22 @@ function iterm-notify
   end
 end
 
-set _iterm_notify_did_run_before_hook ""
+set -g _iterm_notify_did_run_before_hook ""
 
 function _iterm_notify_before_command_hook --on-event fish_preexec
-  iterm-notify before-command "$argv[1]"
-  set _iterm_notify_did_run_before_hook "yep"
+  if test $argv[1] != ""
+    iterm-notify before-command "$argv[1]"
+    set _iterm_notify_did_run_before_hook "yep"
+  end
 end
 
 function _iterm_notify_after_command_hook --on-event fish_prompt
   set last_status "$status"
-  if test -n "$_iterm_notify_did_run_before_hook"
+
+  if test "$_iterm_notify_did_run_before_hook" = yep
     iterm-notify after-command "$last_status"
   end
+
   set _iterm_notify_did_run_before_hook ""
 end
 

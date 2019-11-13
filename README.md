@@ -61,8 +61,10 @@ The behavior of `iterm-notify` can be modified by using `iterm-notify config-set
 first and second arguments, or giving `-` as the first and only argument, and parameters and their values one per line
 on STDIN.
 
-To persist your setting just add calls to `iterm-notify config-set` to your shell's initialization file, **after**
-sourcing `init.sh`.
+**Watch out!** Calls to `config-set` during an interactive session have effect only for the current command
+(eg. between `before-command` and `after-command`). A configuration will last past `after-command` it  must be
+`source`d from a file. To persist a configuration across iTerm session just add calls to `iterm-notify config-set` to
+your shell's initialization file, **after** sourcing `init.sh`. 
 
 - Set the notification backend:
 
