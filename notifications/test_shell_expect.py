@@ -87,6 +87,7 @@ class TestFish(TestInteractiveShell):
         with open("{home}/.config/fish/config.fish".format(home=self.home), "w") as f:
             f.write(";\n".join(fish_init))
 
+    @works_for_me
     def test_fish_with_successful_command(self):
         child = pexpect.spawn('fish --login', env=self.env, timeout=3, encoding='UTF-8')
 
