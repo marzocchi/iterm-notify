@@ -8,7 +8,6 @@ function iterm-notify
   end
 
   if test -n "$TMUX"
-    echo "fish in tmux is not supported yet :-(" | log
     return 42
   end
 
@@ -67,7 +66,11 @@ function iterm-notify
     printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-$k (echo -n "$v" | _base64)
   case send
     set title "$argv[1]"
-    set message "$argv[2]"
+    set message ""
+
+    if test 2 -eq (count $argv)
+      set message "$argv[2]"
+    end
 
     if test -z "$title"
       echo usage: iterm-notify send TITLE MESSAGE | log
