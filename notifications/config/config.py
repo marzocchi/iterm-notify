@@ -92,9 +92,9 @@ def create_default(session_id: str) -> Config:
         logger_name=session_id,
         logger_level="DEBUG",
         command_complete_timeout=30,
-        success_title="#win ({duration_seconds:d})",
+        success_title="#win ({duration})",
         success_message="{command_line}",
-        failure_title="#fail ({duration_seconds:d})",
+        failure_title="#fail ({duration})",
         failure_message="{command_line}"
     )
 

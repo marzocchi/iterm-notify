@@ -22,7 +22,7 @@ class FileStorage:
 
     def load(self) -> dict:
         try:
-            with open(str(self._path), 'r') as f:
+            with open(str(self._path)) as f:
                 data = f.read().strip()
                 if data == "":
                     return {}

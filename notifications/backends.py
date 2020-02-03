@@ -14,7 +14,7 @@ class _Exec(Protocol):  # pragma: no cover
 
 class ExecSubprocess:
     def exec(self, cmd: list):
-        subprocess.run(cmd, input=None, stdin=None, capture_output=False, check=True, timeout=5)
+        subprocess.run(cmd, stdin=None, capture_output=False, check=True, timeout=5)
 
 
 class Backend(ABC):

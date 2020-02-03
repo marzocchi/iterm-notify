@@ -8,7 +8,7 @@ class TestShellScripts(TestCase):
     pass
 
 
-def create_test_func(shell_name: str, init: str, command: str, expected: str, input_text=None):
+def create_test_func(shell_name: str, init_file: str, command: str, expected: str, input_text=None):
     def f(self):
         tmp = NamedTemporaryFile('w', suffix='-iterm-notify-id')
         tmp.write("FOO_ID\n")
@@ -21,7 +21,7 @@ def create_test_func(shell_name: str, init: str, command: str, expected: str, in
             [
                 shell_name,
                 '-c',
-                "source {}; iterm-notify {}".format(init, command)
+                "source {}; iterm-notify {}".format(init_file, command)
             ],
             input=input_text,
             capture_output=True,

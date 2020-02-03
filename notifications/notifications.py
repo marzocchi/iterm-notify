@@ -74,13 +74,6 @@ class Factory:
         self._failure = failure
         self._success = success
 
-    def _vars(self, cmd: Command) -> dict:
-        return {
-            'duration_seconds': cmd.duration.seconds,
-            'command_line': cmd.command_line,
-            'exit_code': cmd.exit_code
-        }
-
     def create(self, message: str, title: str, success: bool = True) -> Notification:
         template = self._success if success else self._failure
 
@@ -99,21 +92,27 @@ class Factory:
         else:
             template = self._failure
 
-        tpl_vars = self._vars(cmd)
-
         icon = template.icon
         sound = template.sound
 
         try:
-            title = template.title.format(**tpl_vars)
+            title = apply_template(template.title, cmd)
         except KeyError:
             title = template.title
 
         try:
-            message = template.message.format(**tpl_vars)
+            message = apply_template(template.message, cmd)
         except KeyError:
             message = template.message
 
         return Notification(title=title, message=message, icon=icon, sound=sound)
 
 
+def apply_template(tpl: str, cmd: Command) -> str:
+    vars = {
+        'duration': timedelta(seconds=round(cmd.duration.total_seconds())),
+        'command_line': cmd.command_line,
+        'exit_code': cmd.exit_code
+    }
+
+    return tpl.format(**vars)

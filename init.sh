@@ -102,7 +102,7 @@ iterm-notify() {
       return 1
     fi
 
-    $printf "\033]1337;Custom=id=%s:%s,%s,%s,%s\a" "$iterm_notify_identity" "notify" \
+    $printf "\033]1337;Custom=id=%s:%s,%s,%s\a" "$iterm_notify_identity" "notify" \
       "$(echo -n "$message" | base64)" \
       "$(echo -n "$title" | base64)"
     ;;

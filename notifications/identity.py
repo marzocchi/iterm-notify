@@ -8,7 +8,7 @@ def load_from_default_path() -> str:
 
 def load(path: Path) -> str:
     try:
-        with open(file=str(path), mode='r') as f:
+        with open(file=str(path)) as f:
             first_line = f.readline().strip()
     except FileNotFoundError:
         raise RuntimeError("identify file not found")

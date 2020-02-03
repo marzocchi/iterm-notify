@@ -98,7 +98,7 @@ your shell's initialization file, **after** sourcing `init.sh`.
     
     - `exit_code`: the command's exit code
     - `command_line`: the full command line typed by the user at the prompt
-    - `duration_second`: the command's duration, in seconds
+    - `duration`: the command's duration, as a `datetime.timedelta`
         
     
 - Set a different timeout for notifications:

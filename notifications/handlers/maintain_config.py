@@ -1,5 +1,5 @@
 import logging
-from typing import Protocol, Optional
+from typing import Protocol
 
 from notifications import Notification
 from notifications.config import Config, Stack

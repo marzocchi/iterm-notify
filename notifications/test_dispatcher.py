@@ -1,7 +1,7 @@
-from unittest import TestCase, skip
+from unittest import TestCase
 from unittest.mock import MagicMock
-from notifications import config, Dispatcher
-import logging
+
+from notifications import Dispatcher
 
 
 class TestDispatcher(TestCase):
