@@ -1,7 +1,7 @@
 iterm-notify() {
   local printf cmd
 
-  base64() {
+  _base64() {
     # some base64 wrap the output
     cat | command base64 | tr -d '\n'
   }
@@ -49,10 +49,10 @@ iterm-notify() {
 
   case $cmd in
   before-command)
-    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "before-command" "$(echo -n "$1" | base64)"
+    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "before-command" "$(echo -n "$1" | _base64)"
     ;;
   after-command)
-    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$(echo -n "$1" | base64)"
+    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$(echo -n "$1" | _base64)"
     ;;
   config-set)
     local k v
@@ -78,7 +78,7 @@ iterm-notify() {
     k="$1"
     v="$2"
 
-    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$(echo -n "$v" | base64)"
+    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$(echo -n "$v" | _base64)"
     ;;
   send)
     local message title
@@ -103,8 +103,8 @@ iterm-notify() {
     fi
 
     $printf "\033]1337;Custom=id=%s:%s,%s,%s\a" "$iterm_notify_identity" "notify" \
-      "$(echo -n "$message" | base64)" \
-      "$(echo -n "$title" | base64)"
+      "$(echo -n "$message" | _base64)" \
+      "$(echo -n "$title" | _base64)"
     ;;
   *)
     echo "unknown subcommand ${cmd}" | log
