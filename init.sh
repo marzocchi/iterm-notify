@@ -55,30 +55,22 @@ iterm-notify() {
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$(echo -n "$1" | _base64)"
     ;;
   config-set)
-    local k v
+    local key values
 
     if [[ $# -lt 2 ]]; then
-
-      if [[ "$1" == "-" ]]; then
-        if [[ -t 0 ]]; then
-          echo "enter one parameter, value pair on each line; hit CTRL-D when done..." | log
-        fi
-        while read -r k v; do
-          iterm-notify config-set "$k" "$v"
-        done
-
-        return 0
-      fi
-
       echo usage: iterm-notify config-set NAME VALUE | log
-      echo usage: echo NAME VALUE \| iterm-notify config-set - | log
       return 1
     fi
 
-    k="$1"
-    v="$2"
+    key="$1"
+    shift
 
-    $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" set-"$k" "$(echo -n "$v" | _base64)"
+    # shellcheck disable=SC2046
+    $printf "\033]1337;Custom=id=%s:%s%s\a" "$iterm_notify_identity" set-"$key" \
+      $(for v in $@; do
+        echo -n ','
+        echo -n "$v" | _base64
+      done)
     ;;
   send)
     local message title
@@ -109,6 +101,7 @@ iterm-notify() {
   *)
     echo "unknown subcommand ${cmd}" | log
     return 1
+    ;;
   esac
 }
 

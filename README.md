@@ -1,14 +1,14 @@
 iTerm-notify [![Build Status](https://github.com/marzocchi/iterm-notify/workflows/All%20tests/badge.svg?branch=master)](https://github.com/marzocchi/iterm-notify/actions)
 ---
 
-Desktop notifications for local and remote long-running commands in iTerm2 and Zsh, Fish or Bash.
+Desktop notifications for local and remote long-running commands in iTerm2 and Zsh or Bash.
 
 Usage
 --- 
 
 iTerm-notify hooks into your shell and iTerm to send you Desktop notifications when those commands you started and
 forgot about in some tab finally finish. To use it, follow the instructions below to run the `notify.py` script with
-iTerm and load `init.sh` (or `init.fish`) in your shell's initialization file.
+iTerm and load `init.sh` in your shell's initialization file.
 
 Once iTerm-notify is hooked up, you can also use `iterm-notify send TITLE MESSAGE` to immediately send notifications
 from the shell.
@@ -16,14 +16,14 @@ from the shell.
 ### Requirements
 - iTerm2 with the Python API enabled with version > 3.8 of the Python Runtime (at the time of writing, this is only
   available with the beta)
-- Zsh, Fish or Bash (with [bash-preexec][bash-preexec])
+- Zsh or Bash (with [bash-preexec][bash-preexec])
 
 ### Installation
 1. Clone this repository
 1. Create your "identity file" by entering a random string as the first line in `$HOME/.iterm-notify-identity`
     - The _identity_ is an important **security feature** of [iTerm2's Custom Control Sequences][explain-id] support, so don't be lazy
 1. Symlink `notify.py` to `~/Library/ApplicationSupport/iTerm2/Scripts/AutoLaunch/notify.py`
-1. Source `init.sh` (Zsh, Bash) or `init.fish` (Fish) in your shell initialization file
+1. Source `init.sh` in your shell initialization file
 1. Start `notify.py` from iTerm2's Scripts menu (Scripts > AutoLaunch > notify.py)
 1. Copy the identity file and `init.*sh` (and source it!) on any other machine you want to receive notifications from.
 1. For Bash: download and install [bash-preexec][bash-preexec] (bundled with iTerm2's shell integration)
@@ -32,9 +32,8 @@ Supported shells
 ---
 
 iTerm-notify needs to track commands starting and finishing and it can work out of the box with shells that provide
-hooks around the prompt, such as Zsh's `preexec`/`precmd` [hooks][zsh-hooks] or Fish [events][fish-events]. In Bash, 
-[bash-preexec][bash-preexec] (which is bundled with iTerm2's shell integration) is required and must be loaded before
-`init.sh`.
+hooks around the prompt, such as Zsh's `preexec`/`precmd` [hooks][zsh-hooks]. In Bash, [bash-preexec][bash-preexec]
+(which is bundled with iTerm2's shell integration) is required and must be loaded before `init.sh`.
 
 Users of other shells can try to make it work by rolling out their own integration:
 
@@ -50,7 +49,7 @@ iTerm-notify uses iTerm2's support for [Custom Control Sequences][explain-id] to
 iTerm which in turn forwards the text to Python-based "daemon" (if the "identity" matches). So, tracking commands
 works correctly in these scenarios:
 
-- Zsh, Fish or Bash running locally or in an SSH session, even when nested or in iTerm's buried sessions
+- Zsh or Bash running locally or in an SSH session, even when nested or in iTerm's buried sessions
 - Zsh or Bash running locally in TMUX
 - TMUX in an SSH session, but not SSH in a TMUX session
 
@@ -113,4 +112,3 @@ your shell's initialization file, **after** sourcing `init.sh`.
 [dogefy.sh]: https://gist.github.com/marzocchi/1bf65095962494a0ff17c417d6b1bb4b
 [bash-preexec]: https://github.com/rcaloras/bash-preexec
 [zsh-hooks]: http://zsh.sourceforge.net/Doc/Release/Functions.html#Hook-Functions
-[fish-events]: https://fishshell.com/docs/current/commands.html#function

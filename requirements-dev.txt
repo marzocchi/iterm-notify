@@ -1,2 +1,1 @@
 iterm2
-pexpect

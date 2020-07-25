@@ -1,7 +1,7 @@
-from unittest import TestCase
+from os import environ
 from subprocess import run
 from tempfile import NamedTemporaryFile
-from os import environ
+from unittest import TestCase
 
 
 class TestShellScripts(TestCase):
@@ -69,7 +69,6 @@ tests = [
 shells = {
     "zsh": "init.sh",
     "bash": "init.sh",
-    "fish": "init.fish"
 }
 
 for shell in shells:
@@ -82,6 +81,4 @@ for shell in shells:
                     init,
                     test['call'],
                     test['expect'],
-                    test['input'] if 'input' in test else None
-                )
-                )
+                    test['input'] if 'input' in test else None))

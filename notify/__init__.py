@@ -1,27 +1,32 @@
 import asyncio
-import iterm2
 import logging
-from typing import List, Optional
-from sys import stderr
 from base64 import b64decode
 from pathlib import Path
+from sys import stderr
+from typing import List, Optional
 
-from notifications import config, backends, dispatcher, strategies, handlers, Notification, Factory, \
-    Dispatcher
+import iterm2
+
+from notify import config, handlers
+from notify.backends import BackendFactory, Executor
+from notify.config import Stack
+from notify.dispatcher import Dispatcher
+from notify.notifications import Factory, Notification
+from notify.strategies import StrategyFactory, iTermAppAdapter
 
 formatter = logging.Formatter('%(name)s: %(levelname)s %(message)s')
-
 console_handler = logging.StreamHandler(stderr)
+main_logger = logging.getLogger(__name__)
+
 console_handler.setFormatter(formatter)
 
-main_logger = logging.getLogger(__name__)
 main_logger.addHandler(console_handler)
 main_logger.setLevel(logging.DEBUG)
 
 
 def build_dispatcher(stack: config.Stack,
-                     strategy: strategies.WhenInactive,
-                     backend: backends.Selectable,
+                     strategy_factory: StrategyFactory,
+                     backend_factory: BackendFactory,
                      logger: Optional[logging.Logger] = None) -> Dispatcher:
     success_template = Notification(
         title=stack.success_title,
@@ -34,27 +39,24 @@ def build_dispatcher(stack: config.Stack,
     )
 
     factory = Factory(
-        success=success_template,
-        failure=failure_template
+        stack=stack,
     )
 
     command_complete_handler = handlers.NotifyCommandComplete(
         stack=stack,
-        strategy=strategy,
-        factory=factory,
-        backend=backend
+        strategy_factory=strategy_factory,
+        notification_factory=factory,
+        backend_factory=backend_factory
     )
 
-    notify_handler = handlers.Notify(backend=backend,
-                                     factory=factory)
+    notify_handler = handlers.Notify(stack=stack, backend_factory=backend_factory,
+                                     notification_factory=factory)
 
     cfg_handler = handlers.MaintainConfig(
         stack=stack,
         logger=logger,
-        timeout=strategy,
         success_template=success_template,
         failure_template=failure_template,
-        backend_selector=backend
     )
 
     dsp = Dispatcher(logger)
@@ -82,26 +84,27 @@ def build_dispatcher(stack: config.Stack,
 
 
 class SessionsMonitor:
-    def __init__(self, identity: str, app: iterm2.App, conn: iterm2.Connection, config_manager: config.Manager):
-        self._identity = identity
-        self._app = app
-        self._conn = conn
-        self._dispatchers = {}
-        self._config_manager = config_manager
+    def __init__(self, identity: str, app: iterm2.App, conn: iterm2.Connection,
+                 config_manager: config.SessionManager):
+        self.__identity = identity
+        self.__app = app
+        self.__conn = conn
+        self.__dispatchers = {}
+        self.__session_manager = config_manager
 
-    def _get_session_by_id(self, session_id: str, logger: logging.Logger) -> Optional[iterm2.Session]:
+    def __get_session_by_id(self, session_id: str, logger: logging.Logger) -> Optional[iterm2.Session]:
         try:
-            return self._app.get_session_by_id(session_id)
+            return self.__app.get_session_by_id(session_id)
         except:
             logger.exception("can't retrieve session object for {}".format(session_id))
             return None
 
     async def attach_escapes_monitor(self, session_id: str):
-        logger = self._create_logger(session_id)
+        logger = self.__create_logger(session_id)
 
         async with iterm2.CustomControlSequenceMonitor(
-                connection=self._conn,
-                identity=self._identity,
+                connection=self.__conn,
+                identity=self.__identity,
                 regex=r'^([^,]+),(.+)$',
                 session_id=session_id
         ) as mon:
@@ -118,57 +121,55 @@ class SessionsMonitor:
 
                 selector = matches.group(1)
                 args = matches.group(2).split(",")
-                args = list(map(lambda s: b64decode(s).decode('utf-8'), args))
 
-                session = self._get_session_by_id(session_id, logger)
+                args_decoded = [b64decode(s).decode('utf-8') for s in args]
+
+                args = args_decoded
+
+                session = self.__get_session_by_id(session_id, logger)
                 if not session:
                     return
 
                 try:
-                    dsp = self._get_or_create_dispatcher(session, logger)
+                    dsp = self.__get_or_create_dispatcher(session, logger)
                 except:
                     logger.exception("could not create dispatcher")
                     continue
 
                 dsp.dispatch(selector, args)
 
-    def _get_or_create_dispatcher(self, session: iterm2.Session, logger: logging.Logger) -> dispatcher.Dispatcher:
-        if session.session_id in self._dispatchers:
-            return self._dispatchers[session.session_id]
+    def __get_or_create_dispatcher(self, session: iterm2.Session, logger: logging.Logger) -> dispatcher.Dispatcher:
+        if session.session_id in self.__dispatchers:
+            return self.__dispatchers[session.session_id]
 
-        stack = self._config_manager.get(session_id=session.session_id)
-        if not stack:
-            cfg = config.create_default(session.session_id)
-            stack = config.Stack([cfg])
-            self._config_manager.register(session.session_id, stack)
+        default_config = config.create_default(session.session_id)
 
-        strategy = strategies.WhenInactive(
-            app=strategies.iTermApp(self._app),
-            session_id=session.session_id,
-            when_slow=strategies.WhenSlow(timeout=30)
-        )
+        config_stack = self.__session_manager.initialize_session_stack(session_id=session.session_id,
+                                                                       default_stack=Stack([default_config]))
 
-        backend = backends.Selectable(
-            {
-                'iterm': backends.Iterm(self._conn, logger=logger),
-                'osascript': backends.OsaScript(backends.ExecSubprocess(), logger=logger),
-                'terminal-notifier': backends.TerminalNotifier(backends.ExecSubprocess(), logger=logger)
-            },
-            stack.notifications_backend,
-            logger=logger
-        )
+        strategy_factories = {
+            'when-inactive': strategies.WhenInactive.create_factory(iTermAppAdapter(self.__app),
+                                                                    session_id=session.session_id),
+            'when-slow': strategies.WhenSlow.create_factory()
+        }
 
-        dsp = build_dispatcher(stack=stack,
-                               strategy=strategy,
-                               backend=backend,
+        backend_factories = {
+            'iterm': backends.iTerm.create_factory(logger=logger, conn=self.__conn),
+            'osascript': backends.OsaScript.create_factory(logger=logger, executor=Executor(logger)),
+            'terminal-notifier': backends.TerminalNotifier.create_factory(logger=logger, executor=Executor(logger))
+        }
+
+        dsp = build_dispatcher(stack=config_stack,
+                               strategy_factory=StrategyFactory(strategy_factories),
+                               backend_factory=BackendFactory(backend_factories),
                                logger=logger)
 
-        self._dispatchers[session.session_id] = dsp
+        self.__dispatchers[session.session_id] = dsp
 
         return dsp
 
     @staticmethod
-    def _create_logger(session_id: str):
+    def __create_logger(session_id: str):
         logger = logging.getLogger(session_id)
         logger.addHandler(console_handler)
         logger.propagate = False
@@ -178,19 +179,19 @@ class SessionsMonitor:
 
 class Monitor:
     def __init__(self, identity: str):
-        self._identity = identity
+        self.__identity = identity
 
     async def attach_sessions_monitor(self, connection):
-        fs = config.manager.FileStorage(
+        fs = config.FileStorage(
             Path.home().joinpath('.iterm-notify-temp.json'),
             logger=main_logger
         )
 
-        config_manager = config.Manager(fs, logger=main_logger)
+        config_manager = config.SessionManager(fs, logger=main_logger)
 
         app = await iterm2.async_get_app(connection)
 
-        config_manager.load(list_existing_session_ids(app=app))
+        config_manager.load_and_prune(list_existing_session_ids(app=app))
 
         # FIXME the following task does nothing of value, except it seems to mitigate a race condition that causes one
         # or two commands from the user's shell init file to be missed when creating new windows (but not tabs or
@@ -198,7 +199,7 @@ class Monitor:
         async def fallback():
             async with iterm2.CustomControlSequenceMonitor(
                     connection,
-                    identity=self._identity,
+                    identity=self.__identity,
                     regex=r'^([^,]+),(.+)$') as mon:
                 while True:
                     await mon.async_get()
@@ -220,7 +221,7 @@ class Monitor:
 
         await iterm2.EachSessionOnceMonitor.async_foreach_session_create_task(
             app,
-            SessionsMonitor(self._identity, app, connection, config_manager=config_manager).attach_escapes_monitor
+            SessionsMonitor(self.__identity, app, connection, config_manager=config_manager).attach_escapes_monitor
         )
 
 
@@ -233,3 +234,4 @@ def list_existing_session_ids(app: iterm2.App):
                 existing_sessions.append(session.session_id)
 
     return existing_sessions
+

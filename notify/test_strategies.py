@@ -1,7 +1,9 @@
-from unittest import TestCase
-from notifications import *
+from datetime import datetime, timedelta
 from typing import Union
-from notifications.strategies import WhenSlow, WhenInactive
+from unittest import TestCase
+
+from notify.commands import Command
+from notify.strategies import WhenInactive, WhenSlow
 
 
 class MockApp:
@@ -35,17 +37,17 @@ class TestIfSlow(TestCase):
         s = WhenSlow(timeout=2)
 
         command = Command(self.started_at, "ls")
-        command.done(0, self.started_at + timedelta(seconds=5))
+        command_complete = command.complete(0, self.started_at + timedelta(seconds=5))
 
-        self.assertTrue(s.should_notify(command))
+        self.assertTrue(s.should_notify(command_complete))
 
     def test_will_not_notify(self):
         s = WhenSlow(timeout=6)
 
         command = Command(self.started_at, "ls")
-        command.done(0, self.started_at + timedelta(seconds=5))
+        complete_command = command.complete(0, self.started_at + timedelta(seconds=5))
 
-        self.assertFalse(s.should_notify(command))
+        self.assertFalse(s.should_notify(complete_command))
 
 
 class TestIfInactive(TestCase):
@@ -66,51 +68,51 @@ class TestIfInactive(TestCase):
         s = WhenInactive(app=app, when_slow=WhenSlow(timeout=2), session_id="foo")
 
         command = Command(self.started_at, "ls")
-        command.done(0, self.started_at + timedelta(seconds=5))
+        complete_command = command.complete(0, self.started_at + timedelta(seconds=5))
 
-        self.assertTrue(s.should_notify(command))
+        self.assertTrue(s.should_notify(complete_command))
 
     def test_will_notify_success_when_app_not_active(self):
         app = MockApp(active=False, current_session_id="foo")
         s = WhenInactive(app=app, when_slow=WhenSlow(timeout=2), session_id="foo")
 
         command = Command(self.started_at, "ls")
-        command.done(0, self.started_at + timedelta(seconds=5))
+        complete_command = command.complete(0, self.started_at + timedelta(seconds=5))
 
-        self.assertTrue(s.should_notify(command))
+        self.assertTrue(s.should_notify(complete_command))
 
     def test_will_not_notify_success_for_fast_commands(self):
         app = MockApp(active=False, current_session_id="bar")
         s = WhenInactive(app=app, when_slow=WhenSlow(timeout=2), session_id="foo")
 
         command = Command(self.started_at, "ls")
-        command.done(0, self.started_at + timedelta(seconds=1))
+        complete_command = command.complete(0, self.started_at + timedelta(seconds=1))
 
-        self.assertFalse(s.should_notify(command))
+        self.assertFalse(s.should_notify(complete_command))
 
     def test_will_notify_failure_for_fast_commands(self):
         app = MockApp(active=True, current_session_id="bar")
         s = WhenInactive(app=app, when_slow=WhenSlow(timeout=2), session_id="foo")
 
         command = Command(self.started_at, "ls")
-        command.done(1, self.started_at + timedelta(seconds=1))
+        complete_command = command.complete(1, self.started_at + timedelta(seconds=1))
 
-        self.assertTrue(s.should_notify(command))
+        self.assertTrue(s.should_notify(complete_command))
 
     def test_will_not_notify_success_when_in_front(self):
         app = MockApp(active=True, current_session_id="foo")
         s = WhenInactive(app=app, when_slow=WhenSlow(timeout=2), session_id="foo")
 
         command = Command(self.started_at, "ls")
-        command.done(0, self.started_at + timedelta(seconds=4))
+        complete_command = command.complete(0, self.started_at + timedelta(seconds=4))
 
-        self.assertFalse(s.should_notify(command))
+        self.assertFalse(s.should_notify(complete_command))
 
     def test_will_not_notify_failure_when_current_session(self):
         app = MockApp(active=True, current_session_id="foo")
         s = WhenInactive(app=app, when_slow=WhenSlow(timeout=2), session_id="foo")
 
         command = Command(self.started_at, "ls")
-        command.done(1, self.started_at + timedelta(seconds=4))
+        complete_command = command.complete(1, self.started_at + timedelta(seconds=4))
 
-        self.assertFalse(s.should_notify(command))
+        self.assertFalse(s.should_notify(complete_command))

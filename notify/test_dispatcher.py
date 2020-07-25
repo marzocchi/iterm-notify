@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from notifications import Dispatcher
+from notify.dispatcher import Dispatcher
 
 
 class TestDispatcher(TestCase):
@@ -24,5 +24,3 @@ class TestDispatcher(TestCase):
 
         with self.assertRaises(RuntimeError):
             d.dispatch("foo", ['a'])
-
-
