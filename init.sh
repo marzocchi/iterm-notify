@@ -55,7 +55,7 @@ iterm-notify() {
     $printf "\033]1337;Custom=id=%s:%s,%s\a" "$iterm_notify_identity" "after-command" "$(echo -n "$1" | _base64)"
     ;;
   config-set)
-    local key values
+    local key
 
     if [[ $# -lt 2 ]]; then
       echo usage: iterm-notify config-set NAME VALUE | log

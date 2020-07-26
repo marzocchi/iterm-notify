@@ -21,12 +21,16 @@ from the shell.
 ### Installation
 1. Clone this repository
 1. Create your "identity file" by entering a random string as the first line in `$HOME/.iterm-notify-identity`
-    - The _identity_ is an important **security feature** of [iTerm2's Custom Control Sequences][explain-id] support, so don't be lazy
+    - The _identity_ is an important **security feature** of [iTerm2's Custom Control Sequences][explain-id] support,
+      so don't be lazy and choose a... well, random string
 1. Symlink `notify.py` to `~/Library/ApplicationSupport/iTerm2/Scripts/AutoLaunch/notify.py`
 1. Source `init.sh` in your shell initialization file
 1. Start `notify.py` from iTerm2's Scripts menu (Scripts > AutoLaunch > notify.py)
-1. Copy the identity file and `init.*sh` (and source it!) on any other machine you want to receive notifications from.
+1. Copy the identity file and `init.sh` (and source it!) on any other machine you want to receive notifications from.
 1. For Bash: download and install [bash-preexec][bash-preexec] (bundled with iTerm2's shell integration)
+
+iTerm-notify also works over SSH: just copy your identity file, and upload and source `init.sh` in the shell on any
+server you want to use it.
 
 Supported shells
 ---
@@ -46,8 +50,8 @@ Users of other shells can try to make it work by rolling out their own integrati
 ### Limitations
 
 iTerm-notify uses iTerm2's support for [Custom Control Sequences][explain-id] to send text **from** the shell **to**
-iTerm which in turn forwards the text to Python-based "daemon" (if the "identity" matches). So, tracking commands
-works correctly in these scenarios:
+iTerm which in turn forwards the text to Python-based daemon (if the "identity" matches). So, tracking commands
+works correctly only in these scenarios:
 
 - Zsh or Bash running locally or in an SSH session, even when nested or in iTerm's buried sessions
 - Zsh or Bash running locally in TMUX
@@ -82,11 +86,9 @@ your shell's initialization file, **after** sourcing `init.sh`.
 - Customize the notifications (check above for what will actually work with your preferred backend):
 
     ```shell
-    iterm-notify config-set - <<'FOO'
-        success-title Command finished successfully!
-        success-icon /path/to/success-icon.png
-        success-sound Glass
-    FOO
+    iterm-notify config-set success-title Command finished successfully!
+    iterm-notify config-set success-icon /path/to/success-icon.png
+    iterm-notify config-set success-sound Glass
     ```
 
     Replace "success" with "failure" for, well, customizing failure notifications. The value for `icon` can also be an
