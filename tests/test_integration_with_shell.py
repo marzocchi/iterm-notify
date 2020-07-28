@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 
-class TestShellScripts(TestCase):
+class TestIntegrationWithLocallyInstalledShells(TestCase):
     pass
 
 
@@ -74,8 +74,8 @@ shells = {
 for shell in shells:
     init = shells[shell]
     for test in tests:
-        setattr(TestShellScripts,
-                "test_{shell}_{command}".format(shell=shell, command=test['name']),
+        setattr(TestIntegrationWithLocallyInstalledShells,
+                "test_{shell}_{command}".format(shell=shell, command=test['name'].replace('-', '_')),
                 create_test_func(
                     shell,
                     init,

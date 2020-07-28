@@ -1,9 +1,10 @@
-name: All tests
+name: Tests
 
 on: [push]
 
 jobs:
-  build:
+  check:
+    name: Lint and Test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -15,6 +16,10 @@ jobs:
       run: |
         sudo apt-get -y install zsh bash
         cp .github/workflows/iterm2.py .
-    - name: Run tests
+        pip install -r requirements-dev.txt
+    - name: Test
       run: |
-        python -m unittest -v
+        make test
+    - name: Lint
+      run: |
+        make lint

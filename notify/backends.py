@@ -77,7 +77,7 @@ class iTerm(Backend):
 
     def notify(self, n: Notification):
         alert = iterm2.Alert(n.title, n.message)
-        self.__logger and self.__logger.info("sending notification: {}".format(n))
+        self.__logger.info("sending notification: {}".format(n))
         asyncio.get_event_loop().create_task(alert.async_run(self.__conn))
 
 
@@ -107,7 +107,7 @@ class OsaScript(Backend):
 
     @classmethod
     def create_factory(cls, logger: logging.Logger, executor: Executor) -> BackendInitializer:
-        def create_osascript(*args):
+        def create_osascript(*args) -> Backend:
             return cls(logger=logger, executor=executor)
 
         return create_osascript
@@ -125,7 +125,7 @@ class OsaScript(Backend):
                 "" if n.sound is None else n.sound
             ]
 
-            self.__logger and self.__logger.info("sending notification: {}".format(n))
+            self.__logger.info("sending notification: {}".format(n))
             self.__executor.execute(cmd)
 
 
@@ -145,7 +145,7 @@ class TerminalNotifier(Backend):
 
     @classmethod
     def create_factory(cls, logger: logging.Logger, executor: Executor) -> BackendInitializer:
-        def create_terminal_notifier(*args):
+        def create_terminal_notifier(*args) -> Backend:
             return cls(logger=logger, executor=executor, path=args[0])
 
         return create_terminal_notifier
@@ -169,5 +169,5 @@ class TerminalNotifier(Backend):
             cmd.append('-sound')
             cmd.append(n.sound)
 
-        self.__logger and self.__logger.info("sending notification: {}".format(n))
+        self.__logger.info("sending notification: {}".format(n))
         self.__executor.execute(cmd)

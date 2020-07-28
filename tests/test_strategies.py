@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Union
 from unittest import TestCase
-
 from notify.commands import Command
 from notify.strategies import WhenInactive, WhenSlow
 

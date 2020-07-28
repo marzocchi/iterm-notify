@@ -1,20 +1,43 @@
 import logging
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.case import TestCase
+from unittest.mock import Mock, Mock
 
-from notify import build_dispatcher
-from notify.backends import Backend, BackendFactory
-from notify.config import Config, SelectedBackend, SelectedStrategy, Stack
-from notify.strategies import StrategyFactory
+from notify import BackendFactory, Stack, build_dispatcher
+from notify import strategies
+from notify.backends import Backend
+from notify.config import Config, SelectedBackend, SelectedStrategy
+
+from notify.dispatcher import Dispatcher
 
 
-class TestIntegrationDispatcher(TestCase):
-    def test(self):
+class TestDispatcher(TestCase):
+    def test_dispatch(self):
+        foo = Mock(['handle'])
+        bar = Mock(['handle'])
+
+        d = Dispatcher(logger=Mock(spec=logging.Logger))
+
+        d.register_handler("foo", foo.handle)
+        d.register_handler("bar", bar.handle)
+
+        d.dispatch("foo", ['a', 'b'])
+
+        foo.handle.assert_called_with('a', 'b')
+        bar.handle.assert_not_called()
+
+    def test_dispatcher_raises_with_unknown_handler(self):
+        d = Dispatcher(logger=Mock(spec=logging.Logger))
+
+        with self.assertRaises(RuntimeError):
+            d.dispatch("foo", ['a'])
+
+    def test_integration(self):
         strategy = Mock(['should_notify', 'timeout'])
         strategy.should_notify = Mock(return_value=True)
         strategy.timeout = 42
 
-        strategy_factory = Mock(spec=StrategyFactory)
+        strategy_factory = Mock(spec=strategies.StrategyFactory)
         strategy_factory.create.return_value = strategy
 
         backend = Mock(spec=Backend)

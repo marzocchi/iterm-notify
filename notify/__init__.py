@@ -3,16 +3,13 @@ import logging
 from base64 import b64decode
 from pathlib import Path
 from sys import stderr
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import iterm2
 
-from notify import config, handlers
+from notify import config, handlers, dispatcher, notifications, strategies, backends
 from notify.backends import BackendFactory, Executor
 from notify.config import Stack
-from notify.dispatcher import Dispatcher
-from notify.notifications import Factory, Notification
-from notify.strategies import StrategyFactory, iTermAppAdapter
 
 formatter = logging.Formatter('%(name)s: %(levelname)s %(message)s')
 console_handler = logging.StreamHandler(stderr)
@@ -25,20 +22,20 @@ main_logger.setLevel(logging.DEBUG)
 
 
 def build_dispatcher(stack: config.Stack,
-                     strategy_factory: StrategyFactory,
+                     strategy_factory: strategies.StrategyFactory,
                      backend_factory: BackendFactory,
-                     logger: Optional[logging.Logger] = None) -> Dispatcher:
-    success_template = Notification(
+                     logger: logging.Logger) -> dispatcher.Dispatcher:
+    success_template = notifications.Notification(
         title=stack.success_title,
         message=stack.success_message
     )
 
-    failure_template = Notification(
+    failure_template = notifications.Notification(
         title=stack.failure_title,
         message=stack.failure_message
     )
 
-    factory = Factory(
+    factory = notifications.Factory(
         stack=stack,
     )
 
@@ -59,7 +56,7 @@ def build_dispatcher(stack: config.Stack,
         failure_template=failure_template,
     )
 
-    dsp = Dispatcher(logger)
+    dsp = dispatcher.Dispatcher(logger)
 
     dsp.register_handler("before-command", command_complete_handler.before_command)
     dsp.register_handler("after-command", command_complete_handler.after_command)
@@ -89,7 +86,7 @@ class SessionsMonitor:
         self.__identity = identity
         self.__app = app
         self.__conn = conn
-        self.__dispatchers = {}
+        self.__dispatchers: Dict[str, dispatcher.Dispatcher] = {}
         self.__session_manager = config_manager
 
     def __get_session_by_id(self, session_id: str, logger: logging.Logger) -> Optional[iterm2.Session]:
@@ -148,7 +145,7 @@ class SessionsMonitor:
                                                                        default_stack=Stack([default_config]))
 
         strategy_factories = {
-            'when-inactive': strategies.WhenInactive.create_factory(iTermAppAdapter(self.__app),
+            'when-inactive': strategies.WhenInactive.create_factory(strategies.iTermAppAdapter(self.__app),
                                                                     session_id=session.session_id),
             'when-slow': strategies.WhenSlow.create_factory()
         }
@@ -160,7 +157,7 @@ class SessionsMonitor:
         }
 
         dsp = build_dispatcher(stack=config_stack,
-                               strategy_factory=StrategyFactory(strategy_factories),
+                               strategy_factory=strategies.StrategyFactory(strategy_factories),
                                backend_factory=BackendFactory(backend_factories),
                                logger=logger)
 
@@ -234,4 +231,3 @@ def list_existing_session_ids(app: iterm2.App):
                 existing_sessions.append(session.session_id)
 
     return existing_sessions
-

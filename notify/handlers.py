@@ -27,13 +27,13 @@ class MaintainConfig:
 
         self.success_title_handler(cfg.success_title)
         self.success_message_handler(cfg.success_message)
-        self.success_icon_handler(cfg.success_icon)
-        self.success_sound_handler(cfg.success_sound)
+        self.success_icon_handler(cfg.success_icon or "")
+        self.success_sound_handler(cfg.success_sound or "")
 
         self.failure_title_handler(cfg.failure_title)
         self.failure_message_handler(cfg.failure_message)
-        self.failure_icon_handler(cfg.failure_icon)
-        self.failure_sound_handler(cfg.failure_sound)
+        self.failure_icon_handler(cfg.failure_icon or "")
+        self.failure_sound_handler(cfg.failure_sound or "")
 
         self.command_complete_timeout_handler(*cfg.notifications_strategy.args)
 
@@ -89,7 +89,7 @@ class MaintainConfig:
 
     def logging_level_handler(self, new_level: str):
         self.__logger.setLevel(new_level)
-        self.__configuration_stack.logger_level = self.__logger.level
+        self.__configuration_stack.logger_level = logging.getLevelName(self.__logger.level)
 
 
 class Notify:
@@ -126,13 +126,13 @@ class NotifyCommandComplete:
         self.__commands.append(Command(datetime.now(), command_line))
 
     def after_command(self, exit_code: str):
-        exit_code = int(exit_code)
+        exit_code_number = int(exit_code)
 
         if len(self.__commands) == 0:
             raise RuntimeError("after_command without a command")
 
         cmd = self.__commands.pop()
-        complete_cmd = cmd.complete(exit_code, datetime.now())
+        complete_cmd = cmd.complete(exit_code_number, datetime.now())
 
         if self.__strategy_factory.create(self.__stack.current.notifications_strategy).should_notify(complete_cmd):
             n = self.__notification_factory.from_command(complete_cmd)

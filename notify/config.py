@@ -138,14 +138,14 @@ class Stack:
         self.on_change.dispatch()
 
     @classmethod
-    def from_dict(cls, data: List[dict]) -> 'Stack':
+    def from_dict(cls, data: List[Dict[str, Any]]) -> 'Stack':
         lst = []
         for d in data:
             lst.append(Config.from_dict(d))
 
         return Stack(lst)
 
-    def to_dict(self) -> List[dict]:
+    def to_dict(self) -> List[Dict[str, Any]]:
         return [c.to_dict() for c in self.__data]
 
     def push(self):
@@ -290,7 +290,7 @@ class SessionManager:
     def __init__(self, storage: Storage, logger: logging.Logger):
         self.__logger = logger
         self.__storage = storage
-        self.__data = {}
+        self.__data: Dict[str, List[Dict[str, Any]]] = {}
 
     def load_and_prune(self, existing_session_ids: List[str]):
         data = self.__storage.load()
@@ -306,7 +306,7 @@ class SessionManager:
         self.__data = valid_data
         self.__storage.save(self.__data)
 
-    def initialize_session_stack(self, session_id: str, default_stack: Stack) -> Optional[Stack]:
+    def initialize_session_stack(self, session_id: str, default_stack: Stack) -> Stack:
         if session_id not in self.__data:
             self.__register(session_id, default_stack)
 

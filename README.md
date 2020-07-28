@@ -1,4 +1,4 @@
-iTerm-notify [![Build Status](https://github.com/marzocchi/iterm-notify/workflows/All%20tests/badge.svg?branch=master)](https://github.com/marzocchi/iterm-notify/actions)
+iTerm-notify [![Build Status](https://github.com/marzocchi/iterm-notify/workflows/Tests/badge.svg?branch=master)](https://github.com/marzocchi/iterm-notify/actions)
 ---
 
 Desktop notifications for local and remote long-running commands in iTerm2 and Zsh or Bash.

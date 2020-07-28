@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from notify.config import SessionManager, Stack, create_default
 
 
-class TestManager(TestCase):
+class TestSessionManager(TestCase):
     SAMPLE_DATA = {
         "CURRENT_SESSION": [
             {
